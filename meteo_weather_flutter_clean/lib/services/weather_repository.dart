@@ -403,10 +403,24 @@ class WeatherRepository {
     double? currentVisibilityMeters;
     final currentTimeForVisibility = currentObj['time'] as String?;
     if (currentTimeForVisibility != null) {
-      final visibilityIndex = hourlyTimesForVisibility.indexOf(currentTimeForVisibility);
-      if (visibilityIndex >= 0 && visibilityIndex < visibilityValues.length) {
-        final value = visibilityValues[visibilityIndex];
-        if (value is num) currentVisibilityMeters = value.toDouble();
+      final currentDateTime = DateTime.tryParse(currentTimeForVisibility);
+      if (currentDateTime != null) {
+        Duration? closestDifference;
+        for (var i = 0; i < hourlyTimesForVisibility.length && i < visibilityValues.length; i++) {
+          final hourlyDateTime = DateTime.tryParse(hourlyTimesForVisibility[i].toString());
+          final value = visibilityValues[i];
+          if (hourlyDateTime == null || value is! num) continue;
+          final difference = hourlyDateTime.difference(currentDateTime).abs();
+          if (closestDifference == null || difference < closestDifference) {
+            closestDifference = difference;
+            currentVisibilityMeters = value.toDouble();
+          }
+        }
+        // Current conditions can be reported between hourly forecast timestamps.
+        // Do not label a distant hourly value as the current visibility.
+        if (closestDifference == null || closestDifference > const Duration(minutes: 90)) {
+          currentVisibilityMeters = null;
+        }
       }
     }
 
