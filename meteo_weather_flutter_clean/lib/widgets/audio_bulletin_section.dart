@@ -116,7 +116,7 @@ class _AudioBulletinSectionState extends State<AudioBulletinSection> {
                   ),
                   const SizedBox(width: 8),
                   const Text(
-                    "النشرة الجوية الصوتية (MCNC)",
+                    "قراءة نص النشرة الجوية محلياً",
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,

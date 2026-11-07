@@ -216,7 +216,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                   const SizedBox(width: 6),
                   IconButton(
                     icon: const Icon(Icons.admin_panel_settings_outlined, color: AppTheme.secondary),
-                    tooltip: "إدارة محلية تجريبية",
+                    tooltip: "أدوات تجريبية محلية",
                     onPressed: _openAdminDashboard,
                   ),
                   IconButton(

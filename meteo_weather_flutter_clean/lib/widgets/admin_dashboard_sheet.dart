@@ -129,7 +129,7 @@ class _AdminDashboardSheetState extends State<AdminDashboardSheet> with SingleTi
                         Icon(Icons.admin_panel_settings, color: AppTheme.secondary, size: 24),
                         SizedBox(width: 8),
                         Text(
-                          "لوحة تحكم الأرصاد السورية (MCNC)",
+                          "أدوات تجريبية محلية للطقس",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

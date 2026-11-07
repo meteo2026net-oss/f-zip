@@ -8,6 +8,9 @@ trap 'rm -rf "$TMP"' EXIT
 if [[ -f "$ROOT/web/index.html" ]]; then
   cp "$ROOT/web/index.html" "$TMP/index.html"
 fi
+if [[ -f "$ROOT/web/manifest.json" ]]; then
+  cp "$ROOT/web/manifest.json" "$TMP/manifest.json"
+fi
 
 flutter create \
   --platforms=android,web \
@@ -22,6 +25,9 @@ cp -R "$TMP/scaffold/web" "$ROOT/web"
 
 if [[ -f "$TMP/index.html" ]]; then
   cp "$TMP/index.html" "$ROOT/web/index.html"
+fi
+if [[ -f "$TMP/manifest.json" ]]; then
+  cp "$TMP/manifest.json" "$ROOT/web/manifest.json"
 fi
 
 echo "Android and Web platform scaffolding generated."
