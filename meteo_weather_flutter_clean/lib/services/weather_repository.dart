@@ -41,7 +41,7 @@ class WeatherRepository {
     CityLocation(name: "تدمر", country: "سوريا", latitude: 34.5577, longitude: 38.2753, isFavorite: false, admin1: "بادية حمص"),
   ];
 
-  // Official Syrian Weather Stations
+  // Placeholder station locations; live MCNC feeds are not connected.
   List<SyrianWeatherStation> getSyrianWeatherStations() {
     return [
       SyrianWeatherStation(

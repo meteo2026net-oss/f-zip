@@ -133,10 +133,10 @@ class SyrianStationsSection extends StatelessWidget {
                     color: AppTheme.primary,
                   ),
                 ),
-                AnimatedWeatherIcon(
-                  condition: station.conditionType,
-                  isDay: true,
-                  size: 28,
+                const Icon(
+                  Icons.location_on_outlined,
+                  color: AppTheme.textMuted,
+                  size: 26,
                 ),
               ],
             ),
@@ -144,7 +144,7 @@ class SyrianStationsSection extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  station.conditionAr,
+                  "مصدر البيانات غير مربوط",
                   style: const TextStyle(
                     fontSize: 11,
                     color: AppTheme.textSecondary,

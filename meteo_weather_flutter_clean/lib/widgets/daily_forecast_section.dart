@@ -29,7 +29,7 @@ class DailyForecastSection extends StatelessWidget {
               Icon(Icons.calendar_month, size: 18, color: AppTheme.secondary),
               SizedBox(width: 8),
               Text(
-                "توقعات الـ 7 أيام القادمة",
+                "التوقعات لـ 16 يوماً القادمة",
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,

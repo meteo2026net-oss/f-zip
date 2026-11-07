@@ -267,13 +267,13 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                           // Hero Current Weather Card
                           _buildHeroWeatherCard(),
 
-                          // Syrian Official Stations Carousel (13 stations)
+                          // Placeholder station locations (no live station feed connected)
                           SyrianStationsSection(
                             stations: _stations,
                             onStationSelected: _onStationSelected,
                           ),
 
-                          // CAP Severe Weather Warnings Banner
+                          // Automated weather indicators (not official alerts)
                           if (_weatherData != null && _weatherData!.alerts.isNotEmpty)
                             SevereWeatherAlertBanner(alerts: _weatherData!.alerts),
 
@@ -284,7 +284,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                           if (_weatherData != null)
                             HourlyForecastSection(hourlyList: _weatherData!.hourlyList),
 
-                          // Daily 7-day Forecast
+                          // Daily 16-day Forecast
                           if (_weatherData != null)
                             DailyForecastSection(dailyList: _weatherData!.dailyList),
 
@@ -296,7 +296,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                               onCustomizeClicked: _openCustomizeMetrics,
                             ),
 
-                          // Interactive Syrian Radar & Weather Map
+                          // Schematic station-location map (no live radar layer)
                           InteractiveWeatherMap(
                             stations: _stations,
                             onStationSelected: _onStationSelected,
