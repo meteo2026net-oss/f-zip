@@ -322,12 +322,13 @@ void main() {
         conditionType: WeatherConditionType.CLEAR,
       );
 
+      SyrianWeatherStation? selected;
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: InteractiveWeatherMap(
               stations: [station],
-              onStationSelected: _ignoreStation,
+              onStationSelected: (value) => selected = value,
             ),
           ),
         ),
@@ -335,6 +336,28 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text("دمشق"), findsOneWidget);
+      await tester.tap(find.text("دمشق"));
+      expect(selected, same(station));
+    });
+
+    testWidgets('plots all registered illustrative locations from their coordinates', (tester) async {
+      final stations = WeatherRepository().getSyrianWeatherStations();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: InteractiveWeatherMap(
+              stations: stations,
+              onStationSelected: _ignoreStation,
+            ),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(stations, hasLength(13));
+      expect(find.text('القامشلي'), findsOneWidget);
+      expect(find.text('تدمر'), findsOneWidget);
+      expect(find.text('السويداء'), findsOneWidget);
     });
   });
 
