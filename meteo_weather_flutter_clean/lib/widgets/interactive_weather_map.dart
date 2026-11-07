@@ -90,9 +90,9 @@ class InteractiveWeatherMap extends StatelessWidget {
                         Align(
                           alignment: FractionalOffset(
                             ((station.longitude - _west) / (_east - _west))
-                                .clamp(0.03, 0.97),
+                                .clamp(0.03, 0.97).toDouble(),
                             ((_north - station.latitude) / (_north - _south))
-                                .clamp(0.05, 0.95),
+                                .clamp(0.05, 0.95).toDouble(),
                           ),
                           child: _StationMarker(
                             station: station,
