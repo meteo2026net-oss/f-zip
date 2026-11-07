@@ -32,7 +32,7 @@ Map<String, dynamic> forecastFixture() {
   );
   return {
     "current": {
-      "time": "2026-01-01T12:00",
+      "time": "2026-01-01T12:15",
       "temperature_2m": 22.0,
       "relative_humidity_2m": 48,
       "apparent_temperature": 21.0,
@@ -83,7 +83,7 @@ void main() {
       final weather = await repository.getFullWeather(city);
 
       expect(weather.hourlyList, isNotEmpty);
-      expect(weather.hourlyList.first.time, "2026-01-01T12:00");
+      expect(weather.hourlyList.first.time, "2026-01-01T13:00");
       expect(weather.hourlyList.any((hour) => hour.time == "2026-01-01T00:00"), isFalse);
       expect(weather.current.visibilityMeters, 10000.0);
       expect(weather.dailyList, hasLength(16));
