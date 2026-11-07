@@ -546,9 +546,6 @@ class WeatherRepository {
     final pollenValues = [grassPollen, alderPollen, birchPollen, weedPollen]
         .whereType<num>()
         .toList();
-    final highestPollen = pollenValues.isEmpty
-        ? null
-        : pollenValues.reduce((a, b) => a > b ? a : b);
     final treePollen = alderPollen == null
         ? birchPollen
         : (birchPollen == null || alderPollen >= birchPollen ? alderPollen : birchPollen);

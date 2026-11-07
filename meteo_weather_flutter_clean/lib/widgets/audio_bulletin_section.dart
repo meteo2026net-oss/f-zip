@@ -190,9 +190,9 @@ class _AudioBulletinSectionState extends State<AudioBulletinSection> {
                             color: AppTheme.textMuted,
                           ),
                         ),
-                        Text(
+                        const Text(
                           "قراءة آلية محلية",
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             color: AppTheme.textMuted,
                           ),
