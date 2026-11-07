@@ -15,6 +15,7 @@ import '../widgets/severe_weather_alert_banner.dart';
 import '../widgets/syrian_stations_section.dart';
 import '../widgets/weather_background.dart';
 import '../widgets/weather_metrics_grid.dart';
+import 'weather_details_screen.dart';
 
 class HomeWeatherScreen extends StatefulWidget {
   const HomeWeatherScreen({super.key});
@@ -223,6 +224,15 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                     icon: const Icon(Icons.admin_panel_settings_outlined, color: AppTheme.secondary),
                     tooltip: "أدوات تجريبية محلية",
                     onPressed: _openAdminDashboard,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.analytics_outlined, color: AppTheme.primary),
+                    tooltip: "تفاصيل الطقس",
+                    onPressed: _weatherData == null ? null : () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => WeatherDetailsScreen(weather: _weatherData!),
+                      ));
+                    },
                   ),
                   IconButton(
                     icon: const Icon(Icons.refresh, color: AppTheme.textSecondary),
