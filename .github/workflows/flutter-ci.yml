@@ -7,6 +7,11 @@ on:
       - "meteo_weather_flutter_clean/**"
       - ".github/workflows/flutter-ci.yml"
 
+# Keep only the newest validation run for this pull request.
+concurrency:
+  group: flutter-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
