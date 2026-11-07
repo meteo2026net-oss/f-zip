@@ -94,7 +94,7 @@ void main() {
 
       expect(weather.airQuality.aqi, -1);
       expect(weather.airQuality.statusAr, "بيانات جودة الهواء غير متاحة");
-      expect(weather.pollen.overallLevelAr, "لا تتوفر بيانات لقاح موثوقة");
+      expect(weather.pollen.overallLevelAr, "غير متاح");
     });
 
     test('Returns no official alert when no alert threshold is met', () async {
