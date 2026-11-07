@@ -448,6 +448,7 @@ class WeatherRepository {
     final hourlyProbs = (hourlyObj['precipitation_probability'] as List<dynamic>?) ?? [];
     final hourlyHumids = (hourlyObj['relative_humidity_2m'] as List<dynamic>?) ?? [];
     final hourlyWinds = (hourlyObj['wind_speed_10m'] as List<dynamic>?) ?? [];
+    final hourlyIsDays = (hourlyObj['is_day'] as List<dynamic>?) ?? [];
 
     final List<HourlyForecast> hourlyList = [];
     final currentTimeText = currentObj['time'] as String?;
@@ -484,6 +485,9 @@ class WeatherRepository {
           humidity: humidityValue is num ? humidityValue.toInt() : -1,
           windSpeedKmh: windValue is num ? windValue.toDouble() : -1,
           conditionType: mapWeatherCode(hCode),
+          isDay: i < hourlyIsDays.length && hourlyIsDays[i] is num
+              ? (hourlyIsDays[i] as num).toInt() == 1
+              : false,
         ),
       );
     }
