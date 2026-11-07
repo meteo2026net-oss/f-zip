@@ -136,7 +136,7 @@ class _GeminiChatSheetState extends State<GeminiChatSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              "مساعد طقس MCNC الذكي",
+                              "مساعد الطقس المحلي في MCNC",
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
