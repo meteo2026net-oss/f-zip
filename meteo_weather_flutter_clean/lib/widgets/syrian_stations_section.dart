@@ -121,10 +121,10 @@ class SyrianStationsSection extends StatelessWidget {
                 ),
               ],
             ),
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   "--",
                   style: TextStyle(
                     fontSize: 24,
@@ -132,24 +132,24 @@ class SyrianStationsSection extends StatelessWidget {
                     color: AppTheme.primary,
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.location_on_outlined,
                   color: AppTheme.textMuted,
                   size: 26,
                 ),
               ],
             ),
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   "مصدر البيانات غير مربوط",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     color: AppTheme.textSecondary,
                   ),
                 ),
-                const Text(
+                Text(
                   "--",
                   style: TextStyle(
                     fontSize: 11,
