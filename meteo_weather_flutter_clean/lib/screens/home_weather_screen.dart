@@ -16,6 +16,7 @@ import '../widgets/syrian_stations_section.dart';
 import '../widgets/weather_background.dart';
 import '../widgets/weather_metrics_grid.dart';
 import 'hourly_forecast_screen.dart';
+import 'weather_trends_screen.dart';
 import 'weather_details_screen.dart';
 
 class HomeWeatherScreen extends StatefulWidget {
@@ -232,6 +233,15 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                     onPressed: _weatherData == null ? null : () {
                       Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => HourlyForecastScreen(weather: _weatherData!),
+                      ));
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.insights_outlined, color: AppTheme.tertiary),
+                    tooltip: "اتجاهات التوقعات",
+                    onPressed: _weatherData == null ? null : () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => WeatherTrendsScreen(weather: _weatherData!),
                       ));
                     },
                   ),
