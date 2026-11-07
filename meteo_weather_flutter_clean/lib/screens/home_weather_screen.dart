@@ -116,6 +116,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
           setState(() {
             _metrics = updated;
           });
+          _repository.saveMetricPreferences(updated);
         },
       ),
     );
@@ -291,6 +292,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                           if (_weatherData != null)
                             WeatherMetricsGrid(
                               weatherData: _weatherData!,
+                              metrics: _metrics,
                               onCustomizeClicked: _openCustomizeMetrics,
                             ),
 

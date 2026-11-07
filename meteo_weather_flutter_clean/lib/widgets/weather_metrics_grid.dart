@@ -4,11 +4,13 @@ import '../theme/app_theme.dart';
 
 class WeatherMetricsGrid extends StatelessWidget {
   final FullWeatherData weatherData;
+  final List<MetricPreference> metrics;
   final VoidCallback onCustomizeClicked;
 
   const WeatherMetricsGrid({
     super.key,
     required this.weatherData,
+    required this.metrics,
     required this.onCustomizeClicked,
   });
 
@@ -17,6 +19,7 @@ class WeatherMetricsGrid extends StatelessWidget {
     final current = weatherData.current;
     final aqi = weatherData.airQuality;
     final pollen = weatherData.pollen;
+    final visibleIds = metrics.where((metric) => metric.isVisible).map((metric) => metric.id).toSet();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -59,62 +62,63 @@ class WeatherMetricsGrid extends StatelessWidget {
             mainAxisSpacing: 12,
             childAspectRatio: 1.45,
             children: [
-              _buildMetricCard(
+              if (visibleIds.contains("humidity")) _buildMetricCard(
                 icon: Icons.water_drop_outlined,
                 iconColor: const Color(0xFF38BDF8),
                 title: "الرطوبة النسبية",
                 value: "${current.humidity}%",
                 subtitle: current.humidity > 70 ? "رطوبة مرتفعة" : "رطوبة معتدلة",
               ),
-              _buildMetricCard(
+              if (visibleIds.contains("wind")) _buildMetricCard(
                 icon: Icons.air,
                 iconColor: const Color(0xFF67E8F9),
                 title: "سرعة الرياح",
                 value: "${current.windSpeedKmh.toInt()} كم/س",
                 subtitle: "الاتجاه: ${_getWindDirection(current.windDirectionDegree)}",
               ),
-              _buildMetricCard(
+              if (visibleIds.contains("pressure")) _buildMetricCard(
                 icon: Icons.speed,
                 iconColor: const Color(0xFFA78BFA),
                 title: "الضغط الجوي",
                 value: "${current.pressureHpa.toInt()} hPa",
                 subtitle: current.pressureHpa >= 1013 ? "ضغط مرتفع (مستقر)" : "ضغط منخفض",
               ),
-              _buildMetricCard(
+              if (visibleIds.contains("uv")) _buildMetricCard(
                 icon: Icons.wb_sunny_outlined,
                 iconColor: const Color(0xFFFBBF24),
                 title: "مؤشر الأشعة (UV)",
                 value: current.uvIndex.toStringAsFixed(1),
                 subtitle: current.uvIndex > 6 ? "شديد (احذر الشمس)" : "معتدل وآمن",
               ),
-              _buildMetricCard(
+              if (visibleIds.contains("air_quality")) _buildMetricCard(
                 icon: Icons.eco_outlined,
-                iconColor: aqi.aqi < 50 ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                iconColor: aqi.aqi >= 0 && aqi.aqi < 50 ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
                 title: "جودة الهواء (AQI)",
                 value: aqi.aqi < 0 ? "غير متاح" : "${aqi.aqi}",
                 subtitle: aqi.statusAr,
               ),
-              _buildMetricCard(
+              if (visibleIds.contains("visibility")) _buildMetricCard(
                 icon: Icons.remove_red_eye_outlined,
                 iconColor: const Color(0xFF34D399),
                 title: "مدى الرؤية",
                 value: "غير متاح",
                 subtitle: "لا توجد قراءة رؤية مرتبطة بالساعة الحالية",
               ),
-              _buildMetricCard(
+              if (visibleIds.contains("apparent_temperature")) _buildMetricCard(
                 icon: Icons.thermostat_outlined,
                 iconColor: const Color(0xFFF472B6),
                 title: "الحرارة المحسوسة",
                 value: "${current.apparentTemperatureCelsius.toInt()}°",
                 subtitle: "الملموس الفعلي",
               ),
-              _buildMetricCard(
+              if (visibleIds.contains("pollen")) _buildMetricCard(
                 icon: Icons.grass,
                 iconColor: const Color(0xFF4ADE80),
                 title: "حبوب اللقاح",
                 value: pollen.overallLevelAr,
                 subtitle: "بيانات اللقاح غير متاحة من المصدر الحالي",
               ),
+
             ],
           ),
         ],

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/weather_models.dart';
 import 'open_meteo_service.dart';
@@ -241,16 +242,45 @@ class WeatherRepository {
 
   // Metric Preferences
   List<MetricPreference> getMetricPreferences() {
-    return [
+    final defaults = <MetricPreference>[
       MetricPreference(id: "humidity", titleAr: "الرطوبة النسبية", order: 1),
       MetricPreference(id: "wind", titleAr: "سرعة واتجاه الرياح", order: 2),
       MetricPreference(id: "pressure", titleAr: "الضغط الجوي", order: 3),
       MetricPreference(id: "uv", titleAr: "مؤشر الأشعة فوق البنفسجية", order: 4),
       MetricPreference(id: "air_quality", titleAr: "جودة الهواء والبيئة", order: 5),
       MetricPreference(id: "visibility", titleAr: "مدى الرؤية الأفقية", order: 6),
-      MetricPreference(id: "dew_point", titleAr: "نقطة الندى", order: 7),
+      MetricPreference(id: "apparent_temperature", titleAr: "الحرارة المحسوسة", order: 7),
       MetricPreference(id: "pollen", titleAr: "حبوب اللقاح والحساسية", order: 8),
     ];
+    final raw = _prefs?.getString("metric_preferences");
+    if (raw == null) return defaults;
+    try {
+      final stored = jsonDecode(raw) as List<dynamic>;
+      final byId = <String, Map<String, dynamic>>{
+        for (final item in stored)
+          if (item is Map<String, dynamic> && item['id'] is String)
+            item['id'] as String: item,
+      };
+      for (final metric in defaults) {
+        final saved = byId[metric.id];
+        if (saved == null) continue;
+        metric.isVisible = saved['isVisible'] == true;
+        metric.order = (saved['order'] as num?)?.toInt() ?? metric.order;
+      }
+      defaults.sort((a, b) => a.order.compareTo(b.order));
+    } catch (_) {
+      return defaults;
+    }
+    return defaults;
+  }
+
+  Future<void> saveMetricPreferences(List<MetricPreference> metrics) async {
+    final payload = metrics.map((metric) => {
+      "id": metric.id,
+      "isVisible": metric.isVisible,
+      "order": metric.order,
+    }).toList();
+    await _prefs?.setString("metric_preferences", jsonEncode(payload));
   }
 
   // WMO Code translation
