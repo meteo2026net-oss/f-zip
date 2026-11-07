@@ -22,17 +22,17 @@ class SyrianStationsSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
+              const Row(
                 children: [
-                  const DecoratedBox(
+                  DecoratedBox(
                     decoration: BoxDecoration(
                       color: AppTheme.textMuted,
                       shape: BoxShape.circle,
                     ),
                     child: SizedBox(width: 8, height: 8),
                   ),
-                  const SizedBox(width: 8),
-                  const Text(
+                  SizedBox(width: 8),
+                  Text(
                     "مواقع محطات الرصد السورية (بيانات توضيحية)",
                     style: TextStyle(
                       fontSize: 16,
