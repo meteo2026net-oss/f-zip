@@ -36,7 +36,7 @@ class WeatherDetailsScreen extends StatelessWidget {
           _infoCard('المستوى العام', weather.pollen.overallLevelAr,
             'الأعشاب: ${weather.pollen.grassLevelAr} • الأشجار: ${weather.pollen.treeLevelAr} • الأعشاب الضارة: ${weather.pollen.weedLevelAr}'),
           const SizedBox(height: 16),
-          Text('المصدر: Open-Meteo. جودة الهواء تقديرات نموذج CAMS وليست قياسات محطة أرضية.', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
+          const Text('المصدر: Open-Meteo. جودة الهواء تقديرات نموذج CAMS وليست قياسات محطة أرضية.', style: TextStyle(color: AppTheme.textMuted, fontSize: 11)),
         ],
       ),
     );
