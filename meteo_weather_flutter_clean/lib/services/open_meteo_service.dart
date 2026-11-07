@@ -77,13 +77,13 @@ class OpenMeteoService {
       if (response.statusCode != 200) return [];
 
       final decoded = json.decode(utf8.decode(response.bodyBytes));
-      if (decoded is! Map<String, dynamic>) return [];
+      if (decoded is! Map) return [];
       final results = decoded['results'];
       if (results is! List) return [];
 
       final cities = <CityLocation>[];
       for (final item in results) {
-        if (item is! Map<String, dynamic>) continue;
+        if (item is! Map) continue;
         final latitude = item['latitude'];
         final longitude = item['longitude'];
         if (latitude is! num ||
