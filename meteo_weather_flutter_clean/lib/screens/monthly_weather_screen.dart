@@ -150,7 +150,7 @@ class _MonthlyWeatherScreenState extends State<MonthlyWeatherScreen> {
         children: values.map((v) => Expanded(child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 1),
           child: Container(
-            height: max <= 0 ? 2 : (v / max * 90).clamp(2, 90),
+            height: max <= 0 ? 2 : (v / max * 90).clamp(2, 90).toDouble(),
             decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.8),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(3))),
           ),
