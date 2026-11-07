@@ -66,7 +66,7 @@ class OpenMeteoService {
       final response = await _client.get(uri).timeout(const Duration(seconds: 15));
       if (response.statusCode != 200) return [];
       final decoded = json.decode(utf8.decode(response.bodyBytes));
-      if (decoded is! Map<String, dynamic>) return [];
+      if (decoded is! Map<String, dynamic>) { return []; }
       final daily = decoded['daily'];
       if (daily is! Map) return [];
       final dates = daily['time'];
