@@ -18,6 +18,7 @@ class AudioBulletinSection extends StatefulWidget {
 class _AudioBulletinSectionState extends State<AudioBulletinSection> {
   final FlutterTts _tts = FlutterTts();
   bool _isPlaying = false;
+  bool _ttsReady = false;
   double _progress = 0.0;
 
   @override
@@ -27,9 +28,14 @@ class _AudioBulletinSectionState extends State<AudioBulletinSection> {
   }
 
   Future<void> _initTts() async {
-    await _tts.setLanguage("ar");
-    await _tts.setPitch(1.0);
-    await _tts.setSpeechRate(0.45);
+    try {
+      await _tts.setLanguage("ar");
+      await _tts.setPitch(1.0);
+      await _tts.setSpeechRate(0.45);
+      if (mounted) setState(() => _ttsReady = true);
+    } catch (_) {
+      if (mounted) setState(() => _ttsReady = false);
+    }
 
     _tts.setCompletionHandler(() {
       if (mounted) {
@@ -50,17 +56,25 @@ class _AudioBulletinSectionState extends State<AudioBulletinSection> {
   }
 
   Future<void> _togglePlay() async {
-    if (_isPlaying) {
-      await _tts.stop();
-      setState(() {
-        _isPlaying = false;
-      });
-    } else {
-      setState(() {
-        _isPlaying = true;
-        _progress = 0.0;
-      });
-      await _tts.speak(widget.bulletin.bulletinScriptAr);
+    if (!_ttsReady) return;
+    try {
+      if (_isPlaying) {
+        await _tts.stop();
+        if (mounted) setState(() => _isPlaying = false);
+      } else {
+        setState(() {
+          _isPlaying = true;
+          _progress = 0.0;
+        });
+        await _tts.speak(widget.bulletin.bulletinScriptAr);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isPlaying = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("تعذر تشغيل القراءة الصوتية على هذا الجهاز.")),
+        );
+      }
     }
   }
 
@@ -144,7 +158,7 @@ class _AudioBulletinSectionState extends State<AudioBulletinSection> {
           Row(
             children: [
               IconButton.filled(
-                onPressed: _togglePlay,
+                onPressed: _ttsReady ? _togglePlay : null,
                 style: IconButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   foregroundColor: const Color(0xFF0F172A),

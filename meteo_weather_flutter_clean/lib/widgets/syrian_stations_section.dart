@@ -25,7 +25,7 @@ class SyrianStationsSection extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Container(
+                  const SizedBox(
                     width: 8,
                     height: 8,
                     decoration: const BoxDecoration(
@@ -114,7 +114,7 @@ class SyrianStationsSection extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Container(
+                const SizedBox(
                   width: 6,
                   height: 6,
                   decoration: const BoxDecoration(

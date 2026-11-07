@@ -149,7 +149,7 @@ class InteractiveWeatherMap extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Text(
-                "${station.nameAr.replaceAll('محطة ', '')}",
+                station.nameAr.replaceAll('محطة ', ''),
                 style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
