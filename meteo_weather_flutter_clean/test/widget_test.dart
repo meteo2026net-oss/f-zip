@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_meteo_weather/models/weather_models.dart';
 import 'package:flutter_meteo_weather/services/open_meteo_service.dart';
 import 'package:flutter_meteo_weather/services/weather_repository.dart';
+import 'package:flutter_meteo_weather/widgets/interactive_weather_map.dart';
 
 class FakeOpenMeteoService extends OpenMeteoService {
   FakeOpenMeteoService(this.forecast);
@@ -65,6 +67,8 @@ Map<String, dynamic> forecastFixture() {
     },
   };
 }
+
+void _ignoreStation(SyrianWeatherStation station) {}
 
 void main() {
   group('MCNC Weather data integrity', () {
@@ -136,4 +140,52 @@ void main() {
       );
     });
   });
+  group('Interactive weather map robustness', () {
+    testWidgets('renders safely when the station list is empty', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: InteractiveWeatherMap(
+              stations: [],
+              onStationSelected: _ignoreStation,
+            ),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text("مواقع توضيحية"), findsOneWidget);
+    });
+
+    testWidgets('renders only available pins for a partial station list', (tester) async {
+      final station = SyrianWeatherStation(
+        id: "st_damascus",
+        nameAr: "محطة دمشق",
+        governorate: "دمشق",
+        latitude: 33.5138,
+        longitude: 36.2765,
+        temperatureCelsius: 20,
+        humidity: 50,
+        pressureHpa: 1013,
+        windSpeedKmh: 10,
+        conditionAr: "صافٍ",
+        conditionType: WeatherConditionType.CLEAR,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: InteractiveWeatherMap(
+              stations: [station],
+              onStationSelected: _ignoreStation,
+            ),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text("دمشق"), findsOneWidget);
+    });
+  });
+
 }
