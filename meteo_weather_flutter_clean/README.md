@@ -65,6 +65,10 @@ android/
 tool/
 ```
 
+## حزم البناء من GitHub Actions
+
+عند نجاح فحوصات Pull Request، ينشر GitHub Actions ملف Artifact لمدة 14 يوماً، ويحتوي على APK ونسخة Web ومجلدي Android وWeb اللذين ولّدهما سكربت التهيئة. افتح تشغيل CI ثم قسم Artifacts للحصول على الحزمة.
+
 ## إسناد البيانات
 
 بيانات جودة الهواء: Open-Meteo / Copernicus Atmosphere Monitoring Service (CAMS). يجب إبقاء إسناد المصدر واضحاً عند نشر التطبيق أو إعادة توزيع البيانات.
