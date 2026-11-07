@@ -25,13 +25,12 @@ class SyrianStationsSection extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const SizedBox(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.textMuted, // Placeholder, not a live connection status
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: AppTheme.textMuted,
                       shape: BoxShape.circle,
                     ),
+                    child: SizedBox(width: 8, height: 8),
                   ),
                   const SizedBox(width: 8),
                   const Text(
@@ -114,13 +113,12 @@ class SyrianStationsSection extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
+                const DecoratedBox(
+                  decoration: BoxDecoration(
                     color: AppTheme.textMuted,
                     shape: BoxShape.circle,
                   ),
+                  child: SizedBox(width: 6, height: 6),
                 ),
               ],
             ),
