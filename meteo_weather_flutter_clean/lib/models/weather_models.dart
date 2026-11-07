@@ -46,8 +46,8 @@ class SyrianWeatherStation {
     required this.windSpeedKmh,
     required this.conditionAr,
     required this.conditionType,
-    this.isOnline = true,
-    this.lastReadingTime = "منذ 10 دقائق",
+    this.isOnline = false,
+    this.lastReadingTime = "لا توجد بيانات مباشرة",
   });
 }
 

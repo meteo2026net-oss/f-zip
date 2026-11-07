@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/weather_models.dart';
 import '../theme/app_theme.dart';
-import 'animated_weather_icon.dart';
 
 class SyrianStationsSection extends StatelessWidget {
   final List<SyrianWeatherStation> stations;

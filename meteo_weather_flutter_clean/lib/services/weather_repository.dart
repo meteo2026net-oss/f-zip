@@ -315,9 +315,10 @@ class WeatherRepository {
       case 51:
       case 53:
       case 55:
+        return "رذاذ متفرق";
       case 56:
       case 57:
-        return "رذاذ متجمد أو متفرق";
+        return "رذاذ متجمد";
       case 61:
       case 63:
         return "أمطار معتدلة";
@@ -538,7 +539,7 @@ class WeatherRepository {
       airQuality: airQualityInfo,
       pollen: pollenInfo,
       alerts: alerts,
-      lastUpdated: "محدث الآن - شبكة الأرصاد السورية",
+      lastUpdated: "المصدر: Open-Meteo • وقت القراءة: ${currentWeather.time}",
     );
   }
 
