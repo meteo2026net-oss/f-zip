@@ -54,6 +54,7 @@ Map<String, dynamic> forecastFixture() {
       "weather_code": List<int>.filled(24, 3),
       "wind_speed_10m": List<num>.filled(24, 12),
       "visibility": List<num>.filled(24, 10000),
+      "is_day": List<int>.generate(24, (i) => i >= 6 && i < 18 ? 1 : 0),
     },
     "daily": {
       "time": dailyDates,
@@ -89,6 +90,8 @@ void main() {
       expect(weather.hourlyList, isNotEmpty);
       expect(weather.hourlyList.first.time, "2026-01-01T13:00");
       expect(weather.hourlyList.any((hour) => hour.time == "2026-01-01T00:00"), isFalse);
+      expect(weather.hourlyList.first.isDay, isTrue);
+      expect(weather.hourlyList.last.isDay, isFalse);
       expect(weather.current.visibilityMeters, 10000.0);
       expect(weather.dailyList, hasLength(16));
       expect(weather.dailyList[2].dayLabel, contains("/"));
