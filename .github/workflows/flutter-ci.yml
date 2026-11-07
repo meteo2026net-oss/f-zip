@@ -6,7 +6,6 @@ on:
     paths:
       - "meteo_weather_flutter_clean/**"
       - ".github/workflows/flutter-ci.yml"
-  workflow_dispatch:
 
 permissions:
   contents: read

@@ -4,7 +4,7 @@ import '../theme/app_theme.dart';
 
 class CustomizeMetricsSheet extends StatefulWidget {
   final List<MetricPreference> metrics;
-  final Function(List<MetricPreference>) onSave;
+  final Future<void> Function(List<MetricPreference>) onSave;
 
   const CustomizeMetricsSheet({
     super.key,
@@ -65,9 +65,9 @@ class _CustomizeMetricsSheetState extends State<CustomizeMetricsSheet> {
                 ),
               ),
               ElevatedButton(
-                onPressed: () {
-                  widget.onSave(_currentMetrics);
-                  Navigator.pop(context);
+                onPressed: () async {
+                  await widget.onSave(_currentMetrics);
+                  if (mounted) Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,

@@ -191,7 +191,7 @@ class _AudioBulletinSectionState extends State<AudioBulletinSection> {
                           ),
                         ),
                         Text(
-                          "${widget.bulletin.durationSec} ثانية",
+                          "قراءة آلية محلية",
                           style: const TextStyle(
                             fontSize: 10,
                             color: AppTheme.textMuted,

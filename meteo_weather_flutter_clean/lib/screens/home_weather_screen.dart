@@ -112,11 +112,11 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => CustomizeMetricsSheet(
         metrics: _metrics,
-        onSave: (updated) {
+        onSave: (updated) async {
           setState(() {
             _metrics = updated;
           });
-          _repository.saveMetricPreferences(updated);
+          await _repository.saveMetricPreferences(updated);
         },
       ),
     );
