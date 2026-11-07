@@ -53,6 +53,8 @@ jobs:
             meteo_weather_flutter_clean/build/app/outputs/flutter-apk/app-release.apk
             meteo_weather_flutter_clean/build/web/
             meteo_weather_flutter_clean/android/
+            !meteo_weather_flutter_clean/android/local.properties
+            !meteo_weather_flutter_clean/android/**/build/**
             meteo_weather_flutter_clean/web/
           if-no-files-found: error
           retention-days: 14
