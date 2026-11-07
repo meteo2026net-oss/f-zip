@@ -11,6 +11,8 @@ class OpenMeteoService {
 
   OpenMeteoService({http.Client? client}) : _client = client ?? http.Client();
 
+  void dispose() => _client.close();
+
   /// Fetches weather forecast from Open-Meteo API
   Future<Map<String, dynamic>?> fetchForecast({
     required double latitude,
@@ -44,7 +46,7 @@ class OpenMeteoService {
     required double longitude,
     DateTime? referenceDate,
   }) async {
-    final end = (referenceDate ?? DateTime.now()).toUtc().subtract(const Duration(days: 5));
+    final end = (referenceDate ?? DateTime.now()).subtract(const Duration(days: 5));
     final start = end.subtract(const Duration(days: 29));
     String dateParam(DateTime date) =>
         '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
