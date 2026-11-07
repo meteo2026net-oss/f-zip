@@ -351,20 +351,26 @@ class WeatherRepository {
 
   // Full Weather fetcher
   Future<FullWeatherData> getFullWeather(CityLocation location) async {
-    final forecastJson = await _apiService.fetchForecast(
-      latitude: location.latitude,
-      longitude: location.longitude,
-    );
+    // Forecast and air-quality endpoints are independent; request them together
+    // to avoid adding the two network latencies to every screen refresh.
+    final responses = await Future.wait<Map<String, dynamic>?>([
+      _apiService.fetchForecast(
+        latitude: location.latitude,
+        longitude: location.longitude,
+      ),
+      _apiService.fetchAirQuality(
+        latitude: location.latitude,
+        longitude: location.longitude,
+      ),
+    ]);
+    final forecastJson = responses[0];
+    final airQualityJson = responses[1];
     if (forecastJson == null) {
       throw const WeatherDataUnavailableException(
         "تعذر جلب بيانات الطقس من خدمة التوقعات.",
       );
     }
 
-    final airQualityJson = await _apiService.fetchAirQuality(
-      latitude: location.latitude,
-      longitude: location.longitude,
-    );
     return _parseFullWeatherData(location, forecastJson, airQualityJson);
   }
 
