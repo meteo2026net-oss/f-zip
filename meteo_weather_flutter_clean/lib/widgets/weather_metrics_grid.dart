@@ -120,7 +120,7 @@ class WeatherMetricsGrid extends StatelessWidget {
                 iconColor: const Color(0xFF4ADE80),
                 title: "حبوب اللقاح",
                 value: pollen.overallLevelAr,
-                subtitle: "بيانات اللقاح غير متاحة من المصدر الحالي",
+                subtitle: pollen.overallLevelAr == "غير متاح" ? "لا تتوفر بيانات اللقاح من المصدر" : "تركيزات متاحة؛ دون تصنيف صحي",
               ),
 
             ],
