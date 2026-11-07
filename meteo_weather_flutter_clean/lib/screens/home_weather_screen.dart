@@ -73,6 +73,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
     } catch (_) {
       if (!mounted || requestId != _weatherRequestId) return;
       setState(() {
+        _weatherData = null;
         _loadError = "تعذر تحميل بيانات الطقس حالياً. تحقق من الاتصال ثم أعد المحاولة.";
         _isLoading = false;
       });
@@ -457,7 +458,9 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
               ),
               _buildHeroSubMetric(
                 label: "فرصة الأمطار",
-                value: todayDaily != null ? "${todayDaily.precipitationProb}%" : "0%",
+                value: todayDaily == null || todayDaily.precipitationProb < 0
+                    ? "—"
+                    : "${todayDaily.precipitationProb}%",
               ),
               _buildHeroSubMetric(
                 label: "سرعة الرياح",
