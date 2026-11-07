@@ -111,6 +111,28 @@ void main() {
       expect(weather.current.visibilityMeters, isNull);
     });
 
+    test('Rejects impossible current humidity and day/night values', () async {
+      final humidityFixture = forecastFixture();
+      (humidityFixture['current'] as Map<String, dynamic>)['relative_humidity_2m'] = 140;
+      final humidityRepository = WeatherRepository(
+        apiService: FakeOpenMeteoService(humidityFixture),
+      );
+      expect(
+        humidityRepository.getFullWeather(WeatherRepository.defaultSyrianCities.first),
+        throwsA(isA<FormatException>()),
+      );
+
+      final dayFixture = forecastFixture();
+      (dayFixture['current'] as Map<String, dynamic>)['is_day'] = 2;
+      final dayRepository = WeatherRepository(
+        apiService: FakeOpenMeteoService(dayFixture),
+      );
+      expect(
+        dayRepository.getFullWeather(WeatherRepository.defaultSyrianCities.first),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
     test('Does not fabricate air quality when the service has no data', () async {
       final repository = WeatherRepository(
         apiService: FakeOpenMeteoService(forecastFixture()),
