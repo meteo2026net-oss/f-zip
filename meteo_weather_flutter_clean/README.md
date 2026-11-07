@@ -67,7 +67,7 @@ tool/
 
 ## حزم البناء من GitHub Actions
 
-عند نجاح فحوصات Pull Request، ينشر GitHub Actions ملف Artifact لمدة 14 يوماً، ويحتوي على APK ونسخة Web ومجلدي Android وWeb اللذين ولّدهما سكربت التهيئة. افتح تشغيل CI ثم قسم Artifacts للحصول على الحزمة.
+عند نجاح فحوصات Pull Request، ينشر GitHub Actions حزمة باسم `mcnc-weather-build-<run_number>` لمدة 14 يوماً، وتحتوي على APK ونسخة Web ومجلدي Android وWeb اللذين ولّدهما سكربت التهيئة. افتح تشغيل CI في تبويب Actions ثم قسم Artifacts للحصول على الحزمة.
 
 ## إسناد البيانات
 
