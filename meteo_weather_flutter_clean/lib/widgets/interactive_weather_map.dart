@@ -47,7 +47,7 @@ class InteractiveWeatherMap extends StatelessWidget {
                 ),
               ),
               Text(
-                'توضيحي',
+                'مواقع توضيحية',
                 style: TextStyle(
                   fontSize: 11,
                   color: AppTheme.primary,
@@ -77,8 +77,6 @@ class InteractiveWeatherMap extends StatelessWidget {
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final width = constraints.maxWidth;
-                final height = constraints.maxHeight;
                 return Stack(
                   clipBehavior: Clip.hardEdge,
                   children: [
