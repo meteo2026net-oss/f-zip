@@ -43,3 +43,14 @@ jobs:
 
       - name: Build Web
         run: flutter build web --release
+
+      - name: Upload Android and Web artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcnc-weather-build-${{ github.run_number }}
+          path: |
+            meteo_weather_flutter_clean/build/app/outputs/flutter-apk/app-release.apk
+            meteo_weather_flutter_clean/build/web/
+          if-no-files-found: error
+          retention-days: 14
