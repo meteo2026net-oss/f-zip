@@ -90,6 +90,20 @@ void main() {
       expect(weather.dailyList[2].dayLabel, contains("/"));
     });
 
+    test('Marks visibility unavailable when the nearest hourly value is too old', () async {
+      final fixture = forecastFixture();
+      (fixture['current'] as Map<String, dynamic>)['time'] = "2026-01-02T02:00";
+      final repository = WeatherRepository(
+        apiService: FakeOpenMeteoService(fixture),
+      );
+
+      final weather = await repository.getFullWeather(
+        WeatherRepository.defaultSyrianCities.first,
+      );
+
+      expect(weather.current.visibilityMeters, isNull);
+    });
+
     test('Does not fabricate air quality when the service has no data', () async {
       final repository = WeatherRepository(
         apiService: FakeOpenMeteoService(forecastFixture()),
