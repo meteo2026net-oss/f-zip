@@ -65,7 +65,7 @@ class HourlyForecastSection extends StatelessWidget {
                     ),
                     AnimatedWeatherIcon(
                       condition: item.conditionType,
-                      isDay: true,
+                      isDay: item.isDay,
                       size: 32,
                     ),
                     Text(
