@@ -48,6 +48,14 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
     _initializeApp();
   }
 
+  @override
+  void dispose() {
+    // Invalidate any pending weather request before releasing its HTTP client.
+    _weatherRequestId++;
+    _repository.dispose();
+    super.dispose();
+  }
+
   Future<void> _initializeApp() async {
     try {
       await _repository.initializePreferences();
