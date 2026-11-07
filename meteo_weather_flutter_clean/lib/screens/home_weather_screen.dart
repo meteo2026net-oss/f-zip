@@ -1,0 +1,441 @@
+import 'package:flutter/material.dart';
+import '../models/weather_models.dart';
+import '../services/weather_repository.dart';
+import '../theme/app_theme.dart';
+import '../widgets/admin_dashboard_sheet.dart';
+import '../widgets/animated_weather_icon.dart';
+import '../widgets/audio_bulletin_section.dart';
+import '../widgets/city_search_sheet.dart';
+import '../widgets/customize_metrics_sheet.dart';
+import '../widgets/daily_forecast_section.dart';
+import '../widgets/gemini_chat_sheet.dart';
+import '../widgets/hourly_forecast_section.dart';
+import '../widgets/interactive_weather_map.dart';
+import '../widgets/severe_weather_alert_banner.dart';
+import '../widgets/syrian_stations_section.dart';
+import '../widgets/weather_background.dart';
+import '../widgets/weather_metrics_grid.dart';
+
+class HomeWeatherScreen extends StatefulWidget {
+  const HomeWeatherScreen({super.key});
+
+  @override
+  State<HomeWeatherScreen> createState() => _HomeWeatherScreenState();
+}
+
+class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
+  final WeatherRepository _repository = WeatherRepository();
+
+  CityLocation _selectedCity = WeatherRepository.defaultSyrianCities.first; // Damascus
+  FullWeatherData? _weatherData;
+  late List<SyrianWeatherStation> _stations;
+  late AudioBulletinItem _bulletin;
+  late List<MetricPreference> _metrics;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _stations = _repository.getSyrianWeatherStations();
+    _bulletin = _repository.getAudioBulletin();
+    _metrics = _repository.getMetricPreferences();
+    _loadWeatherData();
+  }
+
+  Future<void> _loadWeatherData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final data = await _repository.getFullWeather(_selectedCity);
+    if (mounted) {
+      setState(() {
+        _weatherData = data;
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _onCitySelected(CityLocation city) {
+    setState(() {
+      _selectedCity = city;
+    });
+    _loadWeatherData();
+  }
+
+  void _onStationSelected(SyrianWeatherStation station) {
+    // Find or create city location from station
+    final cityLoc = CityLocation(
+      name: station.nameAr.replaceAll("محطة ", ""),
+      country: "سوريا",
+      latitude: station.latitude,
+      longitude: station.longitude,
+      admin1: station.governorate,
+    );
+    _onCitySelected(cityLoc);
+  }
+
+  void _openCitySearch() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => CitySearchSheet(onCitySelected: _onCitySelected),
+    );
+  }
+
+  void _openCustomizeMetrics() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => CustomizeMetricsSheet(
+        metrics: _metrics,
+        onSave: (updated) {
+          setState(() {
+            _metrics = updated;
+          });
+        },
+      ),
+    );
+  }
+
+  void _openGeminiChat() {
+    if (_weatherData == null) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => GeminiChatSheet(weatherData: _weatherData!),
+    );
+  }
+
+  void _openAdminDashboard() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AdminDashboardSheet(
+        repository: _repository,
+        onAlertPublished: (alert) {
+          setState(() {
+            _weatherData?.alerts.insert(0, alert);
+          });
+        },
+        onBulletinUpdated: () {
+          setState(() {
+            _bulletin = _repository.getAudioBulletin();
+          });
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final condition = _weatherData?.current.conditionType ?? WeatherConditionType.CLEAR;
+    final isDay = _weatherData?.current.isDay ?? true;
+
+    return Scaffold(
+      body: WeatherBackground(
+        condition: condition,
+        isDay: isDay,
+        child: SafeArea(
+          child: NestedScrollView(
+            headerSliverBuilder: (context, innerBoxIsScrolled) => [
+              SliverAppBar(
+                floating: true,
+                snap: true,
+                backgroundColor: Colors.transparent,
+                title: Row(
+                  children: [
+                    Image.asset(
+                      'assets/app_weather_icon.jpg',
+                      width: 28,
+                      height: 28,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.wb_sunny, color: AppTheme.primary, size: 24),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      "طقس MCNC",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  // City selector button
+                  InkWell(
+                    onTap: _openCitySearch,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppTheme.borderLight),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.location_on, size: 14, color: AppTheme.primary),
+                          const SizedBox(width: 4),
+                          Text(
+                            _selectedCity.name,
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
+                          ),
+                          const Icon(Icons.arrow_drop_down, size: 16, color: AppTheme.textSecondary),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  IconButton(
+                    icon: const Icon(Icons.admin_panel_settings_outlined, color: AppTheme.secondary),
+                    tooltip: "لوحة تحكم الأرصاد (MCNC)",
+                    onPressed: _openAdminDashboard,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh, color: AppTheme.textSecondary),
+                    tooltip: "تحديث البيانات",
+                    onPressed: _loadWeatherData,
+                  ),
+                ],
+              ),
+            ],
+            body: _isLoading && _weatherData == null
+                ? const Center(
+                    child: CircularProgressIndicator(color: AppTheme.primary),
+                  )
+                : RefreshIndicator(
+                    onRefresh: _loadWeatherData,
+                    color: AppTheme.primary,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 10),
+                          // Hero Current Weather Card
+                          _buildHeroWeatherCard(),
+
+                          // Syrian Official Stations Carousel (13 stations)
+                          SyrianStationsSection(
+                            stations: _stations,
+                            onStationSelected: _onStationSelected,
+                          ),
+
+                          // CAP Severe Weather Warnings Banner
+                          if (_weatherData != null && _weatherData!.alerts.isNotEmpty)
+                            SevereWeatherAlertBanner(alerts: _weatherData!.alerts),
+
+                          // Syrian Audio Bulletin Section (النشرة الصوتية)
+                          AudioBulletinSection(bulletin: _bulletin),
+
+                          // Hourly Forecast
+                          if (_weatherData != null)
+                            HourlyForecastSection(hourlyList: _weatherData!.hourlyList),
+
+                          // Daily 7-day Forecast
+                          if (_weatherData != null)
+                            DailyForecastSection(dailyList: _weatherData!.dailyList),
+
+                          // Environmental Metrics Grid (8 parameters)
+                          if (_weatherData != null)
+                            WeatherMetricsGrid(
+                              weatherData: _weatherData!,
+                              onCustomizeClicked: _openCustomizeMetrics,
+                            ),
+
+                          // Interactive Syrian Radar & Weather Map
+                          InteractiveWeatherMap(
+                            stations: _stations,
+                            onStationSelected: _onStationSelected,
+                          ),
+
+                          // Footer Info
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                            child: Column(
+                              children: [
+                                Text(
+                                  _weatherData?.lastUpdated ?? "المركز الوطني للأرصاد الجوية والمناخ في الجمهورية العربية السورية",
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  "MCNC Weather • الإصدار 1.0 (Flutter & Kotlin)",
+                                  style: TextStyle(fontSize: 10, color: AppTheme.textMuted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 60), // FAB spacing
+                        ],
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openGeminiChat,
+        backgroundColor: AppTheme.primary,
+        foregroundColor: const Color(0xFF0F172A),
+        icon: const Icon(Icons.auto_awesome),
+        label: const Text(
+          "اسأل خبير الطقس الذكي",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroWeatherCard() {
+    final current = _weatherData?.current;
+    if (current == null) return const SizedBox.shrink();
+
+    final todayDaily = _weatherData?.dailyList.isNotEmpty == true ? _weatherData!.dailyList.first : null;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.surface.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppTheme.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _selectedCity.name,
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _selectedCity.admin1 ?? _selectedCity.country,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "${current.temperatureCelsius.toInt()}",
+                        style: const TextStyle(
+                          fontSize: 68,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                          height: 1.0,
+                        ),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8),
+                        child: Text(
+                          "°م",
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Column(
+                children: [
+                  AnimatedWeatherIcon(
+                    condition: current.conditionType,
+                    isDay: current.isDay,
+                    size: 80,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    current.conditionAr,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(color: AppTheme.borderLight),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildHeroSubMetric(
+                label: "المحسوسة",
+                value: "${current.apparentTemperatureCelsius.toInt()}°",
+              ),
+              _buildHeroSubMetric(
+                label: "العظمى / الصغرى",
+                value: todayDaily != null
+                    ? "${todayDaily.maxTempCelsius.toInt()}° / ${todayDaily.minTempCelsius.toInt()}°"
+                    : "--",
+              ),
+              _buildHeroSubMetric(
+                label: "فرصة الأمطار",
+                value: todayDaily != null ? "${todayDaily.precipitationProb}%" : "0%",
+              ),
+              _buildHeroSubMetric(
+                label: "سرعة الرياح",
+                value: "${current.windSpeedKmh.toInt()} كم/س",
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroSubMetric({required String label, required String value}) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+}

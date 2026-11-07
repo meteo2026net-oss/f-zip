@@ -1,0 +1,577 @@
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/weather_models.dart';
+import 'open_meteo_service.dart';
+
+class WeatherRepository {
+  final OpenMeteoService _apiService;
+  final SharedPreferences? _prefs;
+
+  WeatherRepository({
+    OpenMeteoService? apiService,
+    SharedPreferences? prefs,
+  })  : _apiService = apiService ?? OpenMeteoService(),
+        _prefs = prefs;
+
+  // Default Syrian Cities
+  static final List<CityLocation> defaultSyrianCities = [
+    CityLocation(name: "دمشق", country: "سوريا", latitude: 33.5138, longitude: 36.2765, isFavorite: true, admin1: "محافظة دمشق"),
+    CityLocation(name: "حلب", country: "سوريا", latitude: 36.2021, longitude: 37.1343, isFavorite: true, admin1: "محافظة حلب"),
+    CityLocation(name: "حمص", country: "سوريا", latitude: 34.7324, longitude: 36.7137, isFavorite: true, admin1: "محافظة حمص"),
+    CityLocation(name: "اللاذقية", country: "سوريا", latitude: 35.5317, longitude: 35.7915, isFavorite: true, admin1: "محافظة اللاذقية"),
+    CityLocation(name: "طرطوس", country: "سوريا", latitude: 34.8890, longitude: 35.8866, isFavorite: false, admin1: "محافظة طرطوس"),
+    CityLocation(name: "حماة", country: "سوريا", latitude: 35.1318, longitude: 36.7578, isFavorite: false, admin1: "محافظة حماة"),
+    CityLocation(name: "دير الزور", country: "سوريا", latitude: 35.3333, longitude: 40.1500, isFavorite: false, admin1: "محافظة دير الزور"),
+    CityLocation(name: "القامشلي", country: "سوريا", latitude: 37.0494, longitude: 41.2268, isFavorite: false, admin1: "محافظة الحسكة"),
+    CityLocation(name: "السويداء", country: "سوريا", latitude: 32.7130, longitude: 36.5694, isFavorite: false, admin1: "محافظة السويداء"),
+    CityLocation(name: "درعا", country: "سوريا", latitude: 32.6186, longitude: 36.1011, isFavorite: false, admin1: "محافظة درعا"),
+    CityLocation(name: "إدلب", country: "سوريا", latitude: 35.9306, longitude: 36.6339, isFavorite: false, admin1: "محافظة إدلب"),
+    CityLocation(name: "الرقة", country: "سوريا", latitude: 35.9556, longitude: 39.0078, isFavorite: false, admin1: "محافظة الرقة"),
+    CityLocation(name: "تدمر", country: "سوريا", latitude: 34.5577, longitude: 38.2753, isFavorite: false, admin1: "بادية حمص"),
+  ];
+
+  // Official Syrian Weather Stations
+  List<SyrianWeatherStation> getSyrianWeatherStations() {
+    return [
+      SyrianWeatherStation(
+        id: "st_damascus",
+        nameAr: "محطة دمشق الدولي",
+        governorate: "محطة رئيسية - دمشق",
+        latitude: 33.5138,
+        longitude: 36.2765,
+        temperatureCelsius: 24.0,
+        humidity: 45,
+        pressureHpa: 1014.2,
+        windSpeedKmh: 14.0,
+        conditionAr: "صافٍ ومشرق",
+        conditionType: WeatherConditionType.CLEAR,
+      ),
+      SyrianWeatherStation(
+        id: "st_aleppo",
+        nameAr: "محطة حلب الدولي",
+        governorate: "محطة رئيسية - حلب",
+        latitude: 36.2021,
+        longitude: 37.1343,
+        temperatureCelsius: 21.0,
+        humidity: 52,
+        pressureHpa: 1013.8,
+        windSpeedKmh: 16.5,
+        conditionAr: "غائم جزئياً",
+        conditionType: WeatherConditionType.PARTLY_CLOUDY,
+      ),
+      SyrianWeatherStation(
+        id: "st_latakia",
+        nameAr: "محطة اللاذقية البحرية",
+        governorate: "محطة ساحلية - اللاذقية",
+        latitude: 35.5317,
+        longitude: 35.7915,
+        temperatureCelsius: 26.0,
+        humidity: 78,
+        pressureHpa: 1012.5,
+        windSpeedKmh: 22.0,
+        conditionAr: "رذاذ خفيف",
+        conditionType: WeatherConditionType.DRIZZLE,
+      ),
+      SyrianWeatherStation(
+        id: "st_homs",
+        nameAr: "محطة حمص المركزية",
+        governorate: "محطة داخلية - حمص",
+        latitude: 34.7324,
+        longitude: 36.7137,
+        temperatureCelsius: 23.0,
+        humidity: 50,
+        pressureHpa: 1013.0,
+        windSpeedKmh: 18.0,
+        conditionAr: "صافٍ",
+        conditionType: WeatherConditionType.CLEAR,
+      ),
+      SyrianWeatherStation(
+        id: "st_tartus",
+        nameAr: "محطة طرطوس الميناء",
+        governorate: "محطة ساحلية - طرطوس",
+        latitude: 34.8890,
+        longitude: 35.8866,
+        temperatureCelsius: 25.0,
+        humidity: 74,
+        pressureHpa: 1012.8,
+        windSpeedKmh: 19.5,
+        conditionAr: "غائم جزئياً",
+        conditionType: WeatherConditionType.PARTLY_CLOUDY,
+      ),
+      SyrianWeatherStation(
+        id: "st_hama",
+        nameAr: "محطة حماة الزراعية",
+        governorate: "محطة داخلية - حماة",
+        latitude: 35.1318,
+        longitude: 36.7578,
+        temperatureCelsius: 24.0,
+        humidity: 48,
+        pressureHpa: 1013.2,
+        windSpeedKmh: 15.0,
+        conditionAr: "صافٍ ومشرق",
+        conditionType: WeatherConditionType.CLEAR,
+      ),
+      SyrianWeatherStation(
+        id: "st_deir",
+        nameAr: "محطة دير الزور",
+        governorate: "محطة الشرق - دير الزور",
+        latitude: 35.3333,
+        longitude: 40.1500,
+        temperatureCelsius: 28.0,
+        humidity: 35,
+        pressureHpa: 1011.5,
+        windSpeedKmh: 12.0,
+        conditionAr: "مشمس وجاف",
+        conditionType: WeatherConditionType.CLEAR,
+      ),
+      SyrianWeatherStation(
+        id: "st_qamishli",
+        nameAr: "محطة القامشلي",
+        governorate: "محطة الجزيرة - القامشلي",
+        latitude: 37.0494,
+        longitude: 41.2268,
+        temperatureCelsius: 22.0,
+        humidity: 42,
+        pressureHpa: 1013.5,
+        windSpeedKmh: 17.0,
+        conditionAr: "صافٍ",
+        conditionType: WeatherConditionType.CLEAR,
+      ),
+      SyrianWeatherStation(
+        id: "st_sweida",
+        nameAr: "محطة السويداء",
+        governorate: "محطة الجبل - السويداء",
+        latitude: 32.7130,
+        longitude: 36.5694,
+        temperatureCelsius: 19.0,
+        humidity: 55,
+        pressureHpa: 1015.0,
+        windSpeedKmh: 13.0,
+        conditionAr: "لطيف",
+        conditionType: WeatherConditionType.PARTLY_CLOUDY,
+      ),
+      SyrianWeatherStation(
+        id: "st_deraa",
+        nameAr: "محطة درعا السهل",
+        governorate: "محطة الجنوب - درعا",
+        latitude: 32.6186,
+        longitude: 36.1011,
+        temperatureCelsius: 23.0,
+        humidity: 46,
+        pressureHpa: 1014.0,
+        windSpeedKmh: 16.0,
+        conditionAr: "صافٍ",
+        conditionType: WeatherConditionType.CLEAR,
+      ),
+      SyrianWeatherStation(
+        id: "st_idlib",
+        nameAr: "محطة إدلب",
+        governorate: "محطة الشمال - إدلب",
+        latitude: 35.9306,
+        longitude: 36.6339,
+        temperatureCelsius: 21.0,
+        humidity: 58,
+        pressureHpa: 1013.1,
+        windSpeedKmh: 14.0,
+        conditionAr: "غائم جزئياً",
+        conditionType: WeatherConditionType.PARTLY_CLOUDY,
+      ),
+      SyrianWeatherStation(
+        id: "st_raqqa",
+        nameAr: "محطة الرقة",
+        governorate: "محطة الفرات - الرقة",
+        latitude: 35.9556,
+        longitude: 39.0078,
+        temperatureCelsius: 27.0,
+        humidity: 38,
+        pressureHpa: 1012.0,
+        windSpeedKmh: 15.5,
+        conditionAr: "صافٍ",
+        conditionType: WeatherConditionType.CLEAR,
+      ),
+      SyrianWeatherStation(
+        id: "st_palmyra",
+        nameAr: "محطة تدمر الأثرية",
+        governorate: "محطة البادية - تدمر",
+        latitude: 34.5577,
+        longitude: 38.2753,
+        temperatureCelsius: 29.0,
+        humidity: 30,
+        pressureHpa: 1011.0,
+        windSpeedKmh: 18.5,
+        conditionAr: "مشمس",
+        conditionType: WeatherConditionType.CLEAR,
+      ),
+    ];
+  }
+
+  // Audio Bulletin
+  AudioBulletinItem getAudioBulletin() {
+    final title = _prefs?.getString("admin_bulletin_title") ??
+        "النشرة الجوية الصباحية الشاملة - المركز الوطني للأرصاد والمناخ";
+    final script = _prefs?.getString("admin_bulletin_script") ??
+        "تستمر درجات الحرارة حول معدلاتها لمثل هذه الفترة من السنة، والجو صيفياً مائلاً للاعتدال في المناطق الجبلية وحاراً نسبياً في البادية والشرقية، مع ظهور بعض السحب المتفرقة على الساحل السوري وتكون الرياح غربية إلى شمالية غربية معتدلة السرعة تنشط أحياناً بعد الظهر. تحذير من التعرض المباشر لأشعة الشمس في أوقات الذروة.";
+
+    return AudioBulletinItem(
+      id: "bulletin_mcnc_01",
+      title: title,
+      dateFormatted: "اليوم، 07:30 صباحاً",
+      durationSec: 54,
+      announcerName: "رئيس قسم التنبؤات (MCNC)",
+      bulletinScriptAr: script,
+    );
+  }
+
+  Future<void> saveAdminAudioBulletin(String title, String script) async {
+    if (_prefs != null) {
+      await _prefs!.setString("admin_bulletin_title", title);
+      await _prefs!.setString("admin_bulletin_script", script);
+    }
+  }
+
+  // Metric Preferences
+  List<MetricPreference> getMetricPreferences() {
+    return [
+      MetricPreference(id: "humidity", titleAr: "الرطوبة النسبية", order: 1),
+      MetricPreference(id: "wind", titleAr: "سرعة واتجاه الرياح", order: 2),
+      MetricPreference(id: "pressure", titleAr: "الضغط الجوي", order: 3),
+      MetricPreference(id: "uv", titleAr: "مؤشر الأشعة فوق البنفسجية", order: 4),
+      MetricPreference(id: "air_quality", titleAr: "جودة الهواء والبيئة", order: 5),
+      MetricPreference(id: "visibility", titleAr: "مدى الرؤية الأفقية", order: 6),
+      MetricPreference(id: "dew_point", titleAr: "نقطة الندى", order: 7),
+      MetricPreference(id: "pollen", titleAr: "حبوب اللقاح والحساسية", order: 8),
+    ];
+  }
+
+  // WMO Code translation
+  static WeatherConditionType mapWeatherCode(int code) {
+    if (code == 0) return WeatherConditionType.CLEAR;
+    if (code == 1 || code == 2) return WeatherConditionType.PARTLY_CLOUDY;
+    if (code == 3) return WeatherConditionType.OVERCAST;
+    if (code == 45 || code == 48) return WeatherConditionType.FOG;
+    if (code >= 51 && code <= 57) return WeatherConditionType.DRIZZLE;
+    if (code >= 61 && code <= 65) return WeatherConditionType.RAIN;
+    if (code >= 71 && code <= 77) return WeatherConditionType.SNOW;
+    if (code >= 80 && code <= 82) return WeatherConditionType.HEAVY_RAIN;
+    if (code >= 95 && code <= 99) return WeatherConditionType.THUNDERSTORM;
+    return WeatherConditionType.CLEAR;
+  }
+
+  static String getWeatherConditionText(int code, bool isDay) {
+    switch (code) {
+      case 0:
+        return isDay ? "صافٍ ومشرق" : "سماء صافية";
+      case 1:
+      case 2:
+        return "غائم جزئياً";
+      case 3:
+        return "غائم كلياً";
+      case 45:
+      case 48:
+        return "ضباب وتدنٍ في الرؤية";
+      case 51:
+      case 53:
+      case 55:
+        return "رذاذ متفرق";
+      case 61:
+      case 63:
+        return "أمطار معتدلة";
+      case 65:
+      case 80:
+      case 81:
+      case 82:
+        return "أمطار غزيرة ورعدية";
+      case 71:
+      case 73:
+      case 75:
+      case 77:
+        return "تساقط ثلوج";
+      case 95:
+      case 96:
+      case 99:
+        return "عواصف رعدية نشطة";
+      default:
+        return "معتدل ومستقر";
+    }
+  }
+
+  // Full Weather fetcher
+  Future<FullWeatherData> getFullWeather(CityLocation location) async {
+    final forecastJson = await _apiService.fetchForecast(
+      latitude: location.latitude,
+      longitude: location.longitude,
+    );
+
+    final airQualityJson = await _apiService.fetchAirQuality(
+      latitude: location.latitude,
+      longitude: location.longitude,
+    );
+
+    if (forecastJson != null) {
+      return _parseFullWeatherData(location, forecastJson, airQualityJson);
+    }
+
+    // Fallback simulation if offline or error
+    return _generateFallbackWeatherData(location);
+  }
+
+  FullWeatherData _parseFullWeatherData(
+    CityLocation location,
+    Map<String, dynamic> forecast,
+    Map<String, dynamic>? airQuality,
+  ) {
+    final currentObj = forecast['current'] as Map<String, dynamic>? ?? {};
+    final hourlyObj = forecast['hourly'] as Map<String, dynamic>? ?? {};
+    final dailyObj = forecast['daily'] as Map<String, dynamic>? ?? {};
+
+    final temp = (currentObj['temperature_2m'] as num?)?.toDouble() ?? 24.0;
+    final apparentTemp = (currentObj['apparent_temperature'] as num?)?.toDouble() ?? temp;
+    final humidity = (currentObj['relative_humidity_2m'] as num?)?.toInt() ?? 50;
+    final isDay = (currentObj['is_day'] as num?)?.toInt() == 1;
+    final precipMm = (currentObj['precipitation'] as num?)?.toDouble() ?? 0.0;
+    final weatherCode = (currentObj['weather_code'] as num?)?.toInt() ?? 0;
+    final pressure = (currentObj['surface_pressure'] as num?)?.toDouble() ?? 1013.2;
+    final windSpeed = (currentObj['wind_speed_10m'] as num?)?.toDouble() ?? 12.0;
+    final windDir = (currentObj['wind_direction_10m'] as num?)?.toDouble() ?? 270.0;
+    final uv = (currentObj['uv_index'] as num?)?.toDouble() ?? 5.0;
+
+    final conditionType = mapWeatherCode(weatherCode);
+    final conditionAr = getWeatherConditionText(weatherCode, isDay);
+
+    final currentWeather = CurrentWeather(
+      time: currentObj['time'] as String? ?? "الآن",
+      temperatureCelsius: temp,
+      apparentTemperatureCelsius: apparentTemp,
+      humidity: humidity,
+      isDay: isDay,
+      precipitationMm: precipMm,
+      weatherCode: weatherCode,
+      pressureHpa: pressure,
+      windSpeedKmh: windSpeed,
+      windDirectionDegree: windDir,
+      uvIndex: uv,
+      conditionAr: conditionAr,
+      conditionType: conditionType,
+    );
+
+    // Hourly
+    final hourlyTimes = (hourlyObj['time'] as List<dynamic>?) ?? [];
+    final hourlyTemps = (hourlyObj['temperature_2m'] as List<dynamic>?) ?? [];
+    final hourlyCodes = (hourlyObj['weather_code'] as List<dynamic>?) ?? [];
+    final hourlyProbs = (hourlyObj['precipitation_probability'] as List<dynamic>?) ?? [];
+    final hourlyHumids = (hourlyObj['relative_humidity_2m'] as List<dynamic>?) ?? [];
+    final hourlyWinds = (hourlyObj['wind_speed_10m'] as List<dynamic>?) ?? [];
+
+    final List<HourlyForecast> hourlyList = [];
+    final count = hourlyTimes.length > 24 ? 24 : hourlyTimes.length;
+    for (int i = 0; i < count; i++) {
+      final tStr = hourlyTimes[i].toString();
+      final hourLabel = tStr.contains('T') ? "${tStr.split('T')[1].split(':')[0]}:00" : "$i:00";
+      final hCode = i < hourlyCodes.length ? (hourlyCodes[i] as num).toInt() : 0;
+      hourlyList.add(
+        HourlyForecast(
+          time: tStr,
+          hourLabel: hourLabel,
+          temperatureCelsius: i < hourlyTemps.length ? (hourlyTemps[i] as num).toDouble() : temp,
+          weatherCode: hCode,
+          precipitationProb: i < hourlyProbs.length ? (hourlyProbs[i] as num).toInt() : 0,
+          humidity: i < hourlyHumids.length ? (hourlyHumids[i] as num).toInt() : 50,
+          windSpeedKmh: i < hourlyWinds.length ? (hourlyWinds[i] as num).toDouble() : 10.0,
+          conditionType: mapWeatherCode(hCode),
+        ),
+      );
+    }
+
+    // Daily
+    final dailyTimes = (dailyObj['time'] as List<dynamic>?) ?? [];
+    final dailyMaxTemps = (dailyObj['temperature_2m_max'] as List<dynamic>?) ?? [];
+    final dailyMinTemps = (dailyObj['temperature_2m_min'] as List<dynamic>?) ?? [];
+    final dailyCodes = (dailyObj['weather_code'] as List<dynamic>?) ?? [];
+    final dailyProbs = (dailyObj['precipitation_probability_max'] as List<dynamic>?) ?? [];
+    final dailySunrises = (dailyObj['sunrise'] as List<dynamic>?) ?? [];
+    final dailySunsets = (dailyObj['sunset'] as List<dynamic>?) ?? [];
+    final dailyUvs = (dailyObj['uv_index_max'] as List<dynamic>?) ?? [];
+
+    final arabicDays = ["اليوم", "غداً", "بعد غد", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    final List<DailyForecast> dailyList = [];
+    final dCount = dailyTimes.length > 7 ? 7 : dailyTimes.length;
+    for (int i = 0; i < dCount; i++) {
+      final dCode = i < dailyCodes.length ? (dailyCodes[i] as num).toInt() : 0;
+      final dayLabel = i < arabicDays.length ? arabicDays[i] : "اليوم ${i + 1}";
+      dailyList.add(
+        DailyForecast(
+          date: dailyTimes[i].toString(),
+          dayLabel: dayLabel,
+          weatherCode: dCode,
+          maxTempCelsius: i < dailyMaxTemps.length ? (dailyMaxTemps[i] as num).toDouble() : 25.0,
+          minTempCelsius: i < dailyMinTemps.length ? (dailyMinTemps[i] as num).toDouble() : 15.0,
+          precipitationProb: i < dailyProbs.length ? (dailyProbs[i] as num).toInt() : 10,
+          sunrise: i < dailySunrises.length ? (dailySunrises[i].toString().contains('T') ? dailySunrises[i].toString().split('T')[1].substring(0, 5) : "06:12") : "06:12",
+          sunset: i < dailySunsets.length ? (dailySunsets[i].toString().contains('T') ? dailySunsets[i].toString().split('T')[1].substring(0, 5) : "18:45") : "18:45",
+          uvIndexMax: i < dailyUvs.length ? (dailyUvs[i] as num).toDouble() : 6.0,
+          conditionType: mapWeatherCode(dCode),
+        ),
+      );
+    }
+
+    // Air Quality
+    int aqi = 42;
+    double pm25 = 12.0;
+    double pm10 = 25.0;
+    if (airQuality != null && airQuality.containsKey('current')) {
+      final aqCurrent = airQuality['current'] as Map<String, dynamic>;
+      aqi = (aqCurrent['european_aqi'] as num?)?.toInt() ?? 42;
+      pm25 = (aqCurrent['pm2_5'] as num?)?.toDouble() ?? 12.0;
+      pm10 = (aqCurrent['pm10'] as num?)?.toDouble() ?? 25.0;
+    }
+
+    final airQualityInfo = AirQualityInfo(
+      aqi: aqi,
+      statusAr: aqi < 50 ? "جيد ومثالي" : (aqi < 100 ? "معتدل ومقبول" : "غير صحي للحساسين"),
+      pm25: pm25,
+      pm10: pm10,
+      recommendationAr: aqi < 50 ? "الهواء نقي، مناسب لكافة الأنشطة الخارجية والرياضة." : "يوصى بتخفيف الرياضة المجهدة خارجياً للمصابين بالربو.",
+    );
+
+    final pollenInfo = PollenInfo(
+      grassLevelAr: "منخفض",
+      treeLevelAr: "متوسط",
+      weedLevelAr: "منخفض",
+      overallLevelAr: "مستوى طبيعي ومستقر",
+      alertActive: false,
+    );
+
+    // Severe Alerts
+    final alerts = _detectSevereAlerts(location, currentWeather, dailyList, aqi);
+
+    return FullWeatherData(
+      location: location,
+      current: currentWeather,
+      hourlyList: hourlyList,
+      dailyList: dailyList,
+      airQuality: airQualityInfo,
+      pollen: pollenInfo,
+      alerts: alerts,
+      lastUpdated: "محدث الآن - شبكة الأرصاد السورية",
+    );
+  }
+
+  List<SevereWeatherAlert> _detectSevereAlerts(
+    CityLocation location,
+    CurrentWeather current,
+    List<DailyForecast> daily,
+    int aqi,
+  ) {
+    final List<SevereWeatherAlert> list = [];
+
+    if (current.weatherCode >= 95 || current.conditionType == WeatherConditionType.THUNDERSTORM) {
+      list.add(
+        SevereWeatherAlert(
+          id: "thunderstorm_${location.name}",
+          titleAr: "تحذير من عواصف رعدية نشطة في ${location.name}",
+          severity: AlertSeverity.WARNING,
+          descriptionAr: "نشاط لخلايا رعدية مصحوبة برياح هابطة قوية وهطول غزير للأمطار مع احتمالية تساقط حبات البَرَد.",
+          safetyInstructionsAr: "ابتعد عن الأماكن المكشوفة وأعمدة الإنارة، وتجنب النزول للأودية وتجمعات المياه.",
+          source: "المركز الوطني للأرصاد والإنذار المبكر",
+          validUntil: "خلال الـ 6 ساعات القادمة",
+        ),
+      );
+    }
+
+    if (current.temperatureCelsius >= 38.0) {
+      list.add(
+        SevereWeatherAlert(
+          id: "heatwave_${location.name}",
+          titleAr: "تحذير من موجة حر شديدة وجفاف",
+          severity: AlertSeverity.WATCH,
+          descriptionAr: "ارتفاع ملموس على درجات الحرارة يتجاوز المعدلات الموسمية، مع طقس شديد الحرارة وضربات شمس محتملة.",
+          safetyInstructionsAr: "تجنب التعرض المباشر لأشعة الشمس بين 11 صباحاً و 4 عصراً، واحرص على شرب السوائل بوفرة.",
+          source: "إدارة الطوارئ والأرصاد السورية",
+          validUntil: "مستمرة حتى مساء اليوم",
+        ),
+      );
+    }
+
+    if (current.windSpeedKmh >= 40.0) {
+      list.add(
+        SevereWeatherAlert(
+          id: "wind_${location.name}",
+          titleAr: "تنبيه رياح نشطة وعواصف ترابية",
+          severity: AlertSeverity.ADVISORY,
+          descriptionAr: "رياح شديدة السرعة تتجاوز ${current.windSpeedKmh.toInt()} كم/س مع هبات قوية قد تثير الأتربة والغبار.",
+          safetyInstructionsAr: "تثبيت الأجسام القابلة للتطاير والحذر عند القيادة على الطرق السريعة المفتوحة.",
+          source: "هيئة الأرصاد وحماية البيئة",
+          validUntil: "خلال الساعات المقبلة",
+        ),
+      );
+    }
+
+    // Default advisory for all Syrian users if no extreme conditions
+    if (list.isEmpty) {
+      list.add(
+        SevereWeatherAlert(
+          id: "mcnc_bulletin_${location.name}",
+          titleAr: "نشرة الاستقرار الجوي - المركز الوطني للأرصاد (MCNC)",
+          severity: AlertSeverity.ADVISORY,
+          descriptionAr: "أجواء مستقرة عموماً في أغلب المحافظات السورية مع درجات حرارة حول المعدل السنوي وسماء صافية إلى قليلة الغيوم.",
+          safetyInstructionsAr: "الأجواء مثالية للأنشطة الخارجية والتنقل بين المحافظات.",
+          source: "المركز الوطني للأرصاد الجوية والمناخ (MCNC)",
+          validUntil: "صالحة لـ 24 ساعة",
+        ),
+      );
+    }
+
+    return list;
+  }
+
+  FullWeatherData _generateFallbackWeatherData(CityLocation location) {
+    final current = CurrentWeather(
+      time: "الآن",
+      temperatureCelsius: 24.5,
+      apparentTemperatureCelsius: 25.0,
+      humidity: 48,
+      isDay: true,
+      precipitationMm: 0.0,
+      weatherCode: 0,
+      pressureHpa: 1014.0,
+      windSpeedKmh: 14.5,
+      windDirectionDegree: 280.0,
+      uvIndex: 5.5,
+      conditionAr: "صافٍ ومشرق",
+      conditionType: WeatherConditionType.CLEAR,
+    );
+
+    final List<HourlyForecast> hourly = List.generate(24, (i) {
+      return HourlyForecast(
+        time: "$i:00",
+        hourLabel: "${(i % 12 == 0 ? 12 : i % 12)} ${i < 12 ? 'ص' : 'م'}",
+        temperatureCelsius: 22.0 + (i > 6 && i < 16 ? (i - 6) * 0.8 : -(i % 4) * 0.5),
+        weatherCode: 0,
+        precipitationProb: (i * 3) % 20,
+        humidity: 45 + (i % 10),
+        windSpeedKmh: 12.0 + (i % 5),
+        conditionType: WeatherConditionType.CLEAR,
+      );
+    });
+
+    final List<DailyForecast> daily = [
+      DailyForecast(date: "2026-11-07", dayLabel: "اليوم", weatherCode: 0, maxTempCelsius: 26.0, minTempCelsius: 16.0, precipitationProb: 5, sunrise: "06:14", sunset: "18:42", uvIndexMax: 6.0, conditionType: WeatherConditionType.CLEAR),
+      DailyForecast(date: "2026-11-08", dayLabel: "غداً", weatherCode: 1, maxTempCelsius: 25.0, minTempCelsius: 15.0, precipitationProb: 10, sunrise: "06:15", sunset: "18:41", uvIndexMax: 5.8, conditionType: WeatherConditionType.PARTLY_CLOUDY),
+      DailyForecast(date: "2026-11-09", dayLabel: "الأحد", weatherCode: 2, maxTempCelsius: 24.0, minTempCelsius: 14.0, precipitationProb: 20, sunrise: "06:16", sunset: "18:40", uvIndexMax: 5.2, conditionType: WeatherConditionType.PARTLY_CLOUDY),
+      DailyForecast(date: "2026-11-10", dayLabel: "الإثنين", weatherCode: 61, maxTempCelsius: 21.0, minTempCelsius: 13.0, precipitationProb: 65, sunrise: "06:17", sunset: "18:39", uvIndexMax: 3.5, conditionType: WeatherConditionType.RAIN),
+      DailyForecast(date: "2026-11-11", dayLabel: "الثلاثاء", weatherCode: 80, maxTempCelsius: 19.0, minTempCelsius: 12.0, precipitationProb: 75, sunrise: "06:18", sunset: "18:38", uvIndexMax: 3.0, conditionType: WeatherConditionType.HEAVY_RAIN),
+      DailyForecast(date: "2026-11-12", dayLabel: "الأربعاء", weatherCode: 2, maxTempCelsius: 22.0, minTempCelsius: 13.0, precipitationProb: 15, sunrise: "06:19", sunset: "18:37", uvIndexMax: 5.0, conditionType: WeatherConditionType.PARTLY_CLOUDY),
+      DailyForecast(date: "2026-11-13", dayLabel: "الخميس", weatherCode: 0, maxTempCelsius: 23.5, minTempCelsius: 14.0, precipitationProb: 10, sunrise: "06:20", sunset: "18:36", uvIndexMax: 5.6, conditionType: WeatherConditionType.CLEAR),
+    ];
+
+    return FullWeatherData(
+      location: location,
+      current: current,
+      hourlyList: hourly,
+      dailyList: daily,
+      airQuality: AirQualityInfo(aqi: 38, statusAr: "جيد ونقي", pm25: 9.5, pm10: 18.0, recommendationAr: "الهواء نقي وصحي في سماء ${location.name}."),
+      pollen: PollenInfo(grassLevelAr: "منخفض", treeLevelAr: "منخفض", weedLevelAr: "منخفض", overallLevelAr: "مستوى طبيعي ومستقر", alertActive: false),
+      alerts: _detectSevereAlerts(location, current, daily, 38),
+      lastUpdated: "الوضع الاحتياطي - بيانات محاكاة المركز",
+    );
+  }
+}
