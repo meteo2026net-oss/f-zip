@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -25,6 +26,31 @@ class FakeOpenMeteoService extends OpenMeteoService {
     required double latitude,
     required double longitude,
   }) async => null;
+}
+
+class ConcurrentOpenMeteoService extends OpenMeteoService {
+  final forecastCompleter = Completer<Map<String, dynamic>?>();
+  final airQualityCompleter = Completer<Map<String, dynamic>?>();
+  bool forecastRequested = false;
+  bool airQualityRequested = false;
+
+  @override
+  Future<Map<String, dynamic>?> fetchForecast({
+    required double latitude,
+    required double longitude,
+  }) {
+    forecastRequested = true;
+    return forecastCompleter.future;
+  }
+
+  @override
+  Future<Map<String, dynamic>?> fetchAirQuality({
+    required double latitude,
+    required double longitude,
+  }) {
+    airQualityRequested = true;
+    return airQualityCompleter.future;
+  }
 }
 
 Map<String, dynamic> forecastFixture() {
@@ -148,6 +174,25 @@ void main() {
       expect(WeatherRepository.mapWeatherCode(66), WeatherConditionType.HEAVY_RAIN);
       expect(WeatherRepository.mapWeatherCode(999), WeatherConditionType.CLOUDY);
       expect(WeatherRepository.getWeatherConditionText(999, true), "ظاهرة جوية غير مصنفة");
+    });
+
+    test('Requests forecast and air quality concurrently', () async {
+      final service = ConcurrentOpenMeteoService();
+      final repository = WeatherRepository(apiService: service);
+
+      final weatherFuture = repository.getFullWeather(
+        WeatherRepository.defaultSyrianCities.first,
+      );
+
+      expect(service.forecastRequested, isTrue);
+      expect(service.airQualityRequested, isTrue);
+
+      service.forecastCompleter.complete(forecastFixture());
+      service.airQualityCompleter.complete(null);
+      final weather = await weatherFuture;
+
+      expect(weather.current.temperatureCelsius, 22.0);
+      repository.dispose();
     });
 
     test('Uses the current hour as the start of hourly forecast', () async {
