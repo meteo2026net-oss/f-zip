@@ -35,7 +35,7 @@ class SyrianStationsSection extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   const Text(
-                    "شبكة محطات الرصد السورية (MCNC)",
+                    "مواقع محطات الرصد السورية (بيانات توضيحية)",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -52,7 +52,7 @@ class SyrianStationsSection extends StatelessWidget {
                   border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
                 ),
                 child: const Text(
-                  "13 محطة حية",
+                  "13 موقعاً توضيحياً",
                   style: TextStyle(
                     fontSize: 11,
                     color: AppTheme.primary,
@@ -128,7 +128,7 @@ class SyrianStationsSection extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "${station.temperatureCelsius.toInt()}°",
+                  "--",
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -153,7 +153,7 @@ class SyrianStationsSection extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  "${station.humidity}%",
+                  "--",
                   style: const TextStyle(
                     fontSize: 11,
                     color: AppTheme.textMuted,

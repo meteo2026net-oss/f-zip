@@ -33,7 +33,7 @@ class InteractiveWeatherMap extends StatelessWidget {
                   Icon(Icons.map_outlined, size: 20, color: AppTheme.tertiary),
                   SizedBox(width: 8),
                   Text(
-                    "خريطة الأرصاد والرادار الجوي السوري",
+                    "مخطط مواقع محطات الرصد السورية",
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
@@ -43,7 +43,7 @@ class InteractiveWeatherMap extends StatelessWidget {
                 ],
               ),
               Text(
-                "MCNC Radar",
+                "مواقع توضيحية",
                 style: TextStyle(
                   fontSize: 11,
                   color: AppTheme.primary,
@@ -102,7 +102,7 @@ class InteractiveWeatherMap extends StatelessWidget {
                         Icon(Icons.radar, size: 12, color: AppTheme.primary),
                         SizedBox(width: 4),
                         Text(
-                          "تحديث حي للرادار السوري",
+                          "لا توجد طبقة رادار حية",
                           style: TextStyle(fontSize: 10, color: AppTheme.textSecondary),
                         ),
                       ],
@@ -149,7 +149,7 @@ class InteractiveWeatherMap extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Text(
-                "${station.nameAr.replaceAll('محطة ', '')} ${station.temperatureCelsius.toInt()}°",
+                "${station.nameAr.replaceAll('محطة ', '')}",
                 style: const TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
