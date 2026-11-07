@@ -17,6 +17,7 @@ import '../widgets/weather_background.dart';
 import '../widgets/weather_metrics_grid.dart';
 import 'hourly_forecast_screen.dart';
 import 'weather_trends_screen.dart';
+import 'monthly_weather_screen.dart';
 import 'weather_details_screen.dart';
 
 class HomeWeatherScreen extends StatefulWidget {
@@ -233,6 +234,15 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                     onPressed: _weatherData == null ? null : () {
                       Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => HourlyForecastScreen(weather: _weatherData!),
+                      ));
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.calendar_month_outlined, color: AppTheme.secondary),
+                    tooltip: "ملخص الشهر الماضي",
+                    onPressed: () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => MonthlyWeatherScreen(location: _selectedCity),
                       ));
                     },
                   ),
