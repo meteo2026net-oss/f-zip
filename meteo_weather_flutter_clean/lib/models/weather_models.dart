@@ -206,6 +206,7 @@ class HourlyForecast {
   final int humidity;
   final double windSpeedKmh;
   final WeatherConditionType conditionType;
+  final bool isDay;
 
   HourlyForecast({
     required this.time,
@@ -216,6 +217,7 @@ class HourlyForecast {
     required this.humidity,
     required this.windSpeedKmh,
     required this.conditionType,
+    this.isDay = true,
   });
 }
 
