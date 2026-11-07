@@ -37,6 +37,63 @@ class OpenMeteoService {
     return null;
   }
 
+  /// Fetches the latest 30 complete days from Open-Meteo's historical archive.
+  /// These are reanalysis estimates, not direct observations from a local station.
+  Future<List<Map<String, dynamic>>> fetchHistoricalMonth({
+    required double latitude,
+    required double longitude,
+    DateTime? referenceDate,
+  }) async {
+    final end = (referenceDate ?? DateTime.now()).toUtc().subtract(const Duration(days: 5));
+    final start = end.subtract(const Duration(days: 29));
+    String dateParam(DateTime date) =>
+        '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+    final uri = Uri.parse('https://archive-api.open-meteo.com/v1/archive').replace(
+      queryParameters: {
+        'latitude': latitude.toString(),
+        'longitude': longitude.toString(),
+        'start_date': dateParam(start),
+        'end_date': dateParam(end),
+        'daily': 'temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max',
+        'timezone': 'auto',
+      },
+    );
+
+    try {
+      final response = await _client.get(uri).timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) return [];
+      final decoded = json.decode(utf8.decode(response.bodyBytes));
+      if (decoded is! Map<String, dynamic>) return [];
+      final daily = decoded['daily'];
+      if (daily is! Map) return [];
+      final dates = daily['time'];
+      final maxTemps = daily['temperature_2m_max'];
+      final minTemps = daily['temperature_2m_min'];
+      final precipitation = daily['precipitation_sum'];
+      final wind = daily['wind_speed_10m_max'];
+      if (dates is! List || maxTemps is! List || minTemps is! List ||
+          precipitation is! List || wind is! List) return [];
+
+      final length = [dates.length, maxTemps.length, minTemps.length,
+        precipitation.length, wind.length].reduce((a, b) => a < b ? a : b);
+      final rows = <Map<String, dynamic>>[];
+      for (var i = 0; i < length; i++) {
+        if (dates[i] is! String) continue;
+        rows.add({
+          'date': dates[i],
+          'maxTemp': (maxTemps[i] as num?)?.toDouble(),
+          'minTemp': (minTemps[i] as num?)?.toDouble(),
+          'precipitation': (precipitation[i] as num?)?.toDouble(),
+          'maxWind': (wind[i] as num?)?.toDouble(),
+        });
+      }
+      return rows;
+    } catch (_) {
+      return [];
+    }
+  }
+
   /// Fetches air quality from Open-Meteo API
   Future<Map<String, dynamic>?> fetchAirQuality({
     required double latitude,
