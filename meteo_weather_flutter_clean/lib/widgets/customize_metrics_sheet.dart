@@ -67,7 +67,7 @@ class _CustomizeMetricsSheetState extends State<CustomizeMetricsSheet> {
               ElevatedButton(
                 onPressed: () async {
                   await widget.onSave(_currentMetrics);
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
