@@ -29,7 +29,7 @@ class SyrianStationsSection extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF10B981), // Emerald green pulse
+                      color: AppTheme.textMuted, // Placeholder, not a live connection status
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -118,7 +118,7 @@ class SyrianStationsSection extends StatelessWidget {
                   width: 6,
                   height: 6,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF10B981),
+                    color: AppTheme.textMuted,
                     shape: BoxShape.circle,
                   ),
                 ),

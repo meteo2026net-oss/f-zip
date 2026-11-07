@@ -143,7 +143,7 @@ class InteractiveWeatherMap extends StatelessWidget {
                 width: 6,
                 height: 6,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF10B981),
+                  color: AppTheme.textMuted,
                   shape: BoxShape.circle,
                 ),
               ),

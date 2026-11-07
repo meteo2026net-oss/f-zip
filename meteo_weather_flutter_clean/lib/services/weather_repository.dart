@@ -226,9 +226,9 @@ class WeatherRepository {
     return AudioBulletinItem(
       id: "bulletin_mcnc_01",
       title: title,
-      dateFormatted: "اليوم، 07:30 صباحاً",
+      dateFormatted: "نص افتراضي - غير مسجل",
       durationSec: 54,
-      announcerName: "رئيس قسم التنبؤات (MCNC)",
+      announcerName: "قراءة آلية محلية",
       bulletinScriptAr: script,
     );
   }

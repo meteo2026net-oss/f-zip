@@ -3,7 +3,7 @@ import '../models/weather_models.dart';
 import '../services/gemini_assistant_service.dart';
 import '../theme/app_theme.dart';
 
-class GeminiChatSheet extends StatefulWidget {
+class مساعد الطقس المحليChatSheet extends StatefulWidget {
   final FullWeatherData weatherData;
 
   const GeminiChatSheet({

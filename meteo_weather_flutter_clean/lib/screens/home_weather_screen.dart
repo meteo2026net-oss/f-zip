@@ -216,7 +216,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                   const SizedBox(width: 6),
                   IconButton(
                     icon: const Icon(Icons.admin_panel_settings_outlined, color: AppTheme.secondary),
-                    tooltip: "لوحة تحكم الأرصاد (MCNC)",
+                    tooltip: "إدارة محلية تجريبية",
                     onPressed: _openAdminDashboard,
                   ),
                   IconButton(
@@ -334,7 +334,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
         foregroundColor: const Color(0xFF0F172A),
         icon: const Icon(Icons.auto_awesome),
         label: const Text(
-          "اسأل خبير الطقس الذكي",
+          "اسأل مساعد الطقس المحلي",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),

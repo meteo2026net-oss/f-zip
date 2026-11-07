@@ -61,11 +61,11 @@ class _AdminDashboardSheetState extends State<AdminDashboardSheet> with SingleTi
       severity: _selectedSeverity,
       descriptionAr: _alertDescController.text.trim().isNotEmpty
           ? _alertDescController.text.trim()
-          : "تحذير جوي رسمي صادر عن المركز الوطني للأرصاد الجوية والمناخ.",
+          : "تنبيه تجريبي أُنشئ محلياً ولم يتم اعتماده أو إرساله رسمياً.",
       safetyInstructionsAr: _alertInstructionController.text.trim().isNotEmpty
           ? _alertInstructionController.text.trim()
           : "الالتزام بتوجيهات الدفاع المدني والابتعاد عن مجاري السيول والأماكن المكشوفة.",
-      source: "غرفة عمليات الإنذار المبكر (CAP - MCNC)",
+      source: "إنشاء محلي - غير مرسل عبر CAP",
       validUntil: "ساري المفعول لمدة 12 ساعة",
     );
 
@@ -89,7 +89,7 @@ class _AdminDashboardSheetState extends State<AdminDashboardSheet> with SingleTi
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("تم تحديث النشرة الجوية الصوتية بنجاح!"),
+          content: Text("تم حفظ نص النشرة محلياً على هذا الجهاز."),
           backgroundColor: Color(0xFF10B981),
         ),
       );
@@ -151,7 +151,7 @@ class _AdminDashboardSheetState extends State<AdminDashboardSheet> with SingleTi
                   labelColor: AppTheme.primary,
                   unselectedLabelColor: AppTheme.textMuted,
                   tabs: const [
-                    Tab(text: "إصدار تنبيه CAP"),
+                    Tab(text: "تنبيه تجريبي محلي"),
                     Tab(text: "تسجيل النشرة الصوتية"),
                   ],
                 ),
@@ -285,7 +285,7 @@ class _AdminDashboardSheetState extends State<AdminDashboardSheet> with SingleTi
                         child: ElevatedButton.icon(
                           onPressed: _saveBulletin,
                           icon: const Icon(Icons.record_voice_over),
-                          label: const Text("نشر وتحديث النشرة الصوتية"),
+                          label: const Text("حفظ نص النشرة على هذا الجهاز"),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primary,
                             foregroundColor: const Color(0xFF0F172A),
