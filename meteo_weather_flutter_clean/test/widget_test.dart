@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:flutter_meteo_weather/models/weather_models.dart';
 import 'package:flutter_meteo_weather/services/open_meteo_service.dart';
 import 'package:flutter_meteo_weather/services/weather_repository.dart';
@@ -72,6 +76,68 @@ Map<String, dynamic> forecastFixture() {
 void _ignoreStation(SyrianWeatherStation station) {}
 
 void main() {
+  group('Open-Meteo geocoding validation', () {
+    test('skips malformed and out-of-range city coordinates', () async {
+      late Uri requestedUri;
+      final client = MockClient((request) async {
+        requestedUri = request.url;
+        return http.Response(jsonEncode({
+          'results': [
+            {
+              'name': 'دمشق',
+              'country': 'سوريا',
+              'latitude': 33.5138,
+              'longitude': 36.2765,
+              'admin1': 'محافظة دمشق',
+              'country_code': 'SY',
+            },
+            {
+              'name': 'Invalid latitude',
+              'country': 'Test',
+              'latitude': 95,
+              'longitude': 10,
+            },
+            {
+              'name': 'Invalid longitude',
+              'country': 'Test',
+              'latitude': 20,
+              'longitude': -181,
+            },
+            {
+              'name': 'String coordinate',
+              'country': 'Test',
+              'latitude': '30',
+              'longitude': 30,
+            },
+            'not-a-city',
+          ],
+        }), 200);
+      });
+      final service = OpenMeteoService(client: client);
+
+      final cities = await service.searchCities('  دمشق  ');
+
+      expect(requestedUri.queryParameters['name'], 'دمشق');
+      expect(cities, hasLength(1));
+      expect(cities.single.name, 'دمشق');
+      expect(cities.single.latitude, 33.5138);
+      expect(cities.single.longitude, 36.2765);
+      client.close();
+    });
+
+    test('does not send a request for a blank city query', () async {
+      var requestCount = 0;
+      final client = MockClient((request) async {
+        requestCount++;
+        return http.Response('{}', 200);
+      });
+      final service = OpenMeteoService(client: client);
+
+      expect(await service.searchCities('   '), isEmpty);
+      expect(requestCount, 0);
+      client.close();
+    });
+  });
   group('MCNC Weather data integrity', () {
     test('Maps WMO snow, freezing rain and unknown codes conservatively', () {
       expect(WeatherRepository.mapWeatherCode(85), WeatherConditionType.SNOW);

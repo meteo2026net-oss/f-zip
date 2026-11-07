@@ -64,8 +64,9 @@ class OpenMeteoService {
   Future<List<CityLocation>> searchCities(String query) async {
     if (query.trim().isEmpty) return [];
 
+    final normalizedQuery = query.trim();
     final uri = Uri.parse(_geocodingBaseUrl).replace(queryParameters: {
-      'name': query,
+      'name': normalizedQuery,
       'count': '10',
       'language': 'ar',
       'format': 'json',
@@ -73,23 +74,49 @@ class OpenMeteoService {
 
     try {
       final response = await _client.get(uri).timeout(const Duration(seconds: 6));
-      if (response.statusCode == 200) {
-        final data = json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
-        final results = data['results'] as List<dynamic>?;
-        if (results != null) {
-          return results.map((item) {
-            return CityLocation(
-              name: item['name'] as String? ?? query,
-              country: item['country'] as String? ?? 'العالم',
-              latitude: (item['latitude'] as num).toDouble(),
-              longitude: (item['longitude'] as num).toDouble(),
-              admin1: item['admin1'] as String?,
-              countryCode: item['country_code'] as String?,
-            );
-          }).toList();
+      if (response.statusCode != 200) return [];
+
+      final decoded = json.decode(utf8.decode(response.bodyBytes));
+      if (decoded is! Map<String, dynamic>) return [];
+      final results = decoded['results'];
+      if (results is! List) return [];
+
+      final cities = <CityLocation>[];
+      for (final item in results) {
+        if (item is! Map<String, dynamic>) continue;
+        final latitude = item['latitude'];
+        final longitude = item['longitude'];
+        if (latitude is! num ||
+            longitude is! num ||
+            !latitude.isFinite ||
+            !longitude.isFinite ||
+            latitude < -90 ||
+            latitude > 90 ||
+            longitude < -180 ||
+            longitude > 180) {
+          continue;
         }
+
+        final name = item['name'];
+        final country = item['country'];
+        final admin1 = item['admin1'];
+        final countryCode = item['country_code'];
+        cities.add(CityLocation(
+          name: name is String && name.trim().isNotEmpty
+              ? name
+              : normalizedQuery,
+          country: country is String && country.trim().isNotEmpty
+              ? country
+              : 'العالم',
+          latitude: latitude.toDouble(),
+          longitude: longitude.toDouble(),
+          admin1: admin1 is String ? admin1 : null,
+          countryCode: countryCode is String ? countryCode : null,
+        ));
       }
-    } catch (_) {}
-    return [];
+      return cities;
+    } catch (_) {
+      return [];
+    }
   }
 }
