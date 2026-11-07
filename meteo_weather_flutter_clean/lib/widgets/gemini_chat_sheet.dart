@@ -3,7 +3,7 @@ import '../models/weather_models.dart';
 import '../services/gemini_assistant_service.dart';
 import '../theme/app_theme.dart';
 
-class مساعد الطقس المحليChatSheet extends StatefulWidget {
+class GeminiChatSheet extends StatefulWidget {
   final FullWeatherData weatherData;
 
   const GeminiChatSheet({
@@ -28,7 +28,7 @@ class _GeminiChatSheetState extends State<GeminiChatSheet> {
       ChatMessageItem(
         id: "msg_init",
         sender: "gemini",
-        text: "أهلاً بك! أنا مساعد طقس MCNC الذكي. كيف أساعدك اليوم بخصوص الأحوال الجوية في ${widget.weatherData.location.name} أو إرشادات السفر والزراعة؟",
+        text: "أهلاً بك! أنا مساعد الطقس المحلي في MCNC. كيف أساعدك اليوم بخصوص الأحوال الجوية في ${widget.weatherData.location.name} أو إرشادات السفر والزراعة؟",
         timestamp: "الآن",
       ),
     );
