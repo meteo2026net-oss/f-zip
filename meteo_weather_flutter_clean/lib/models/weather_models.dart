@@ -175,6 +175,7 @@ class CurrentWeather {
   final double windSpeedKmh;
   final double windDirectionDegree;
   final double uvIndex;
+  final double? visibilityMeters;
   final String conditionAr;
   final WeatherConditionType conditionType;
 
@@ -190,6 +191,7 @@ class CurrentWeather {
     required this.windSpeedKmh,
     required this.windDirectionDegree,
     required this.uvIndex,
+    this.visibilityMeters,
     required this.conditionAr,
     required this.conditionType,
   });

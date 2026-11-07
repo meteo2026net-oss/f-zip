@@ -81,6 +81,7 @@ void main() {
       expect(weather.hourlyList, isNotEmpty);
       expect(weather.hourlyList.first.time, "2026-01-01T12:00");
       expect(weather.hourlyList.any((hour) => hour.time == "2026-01-01T00:00"), isFalse);
+      expect(weather.current.visibilityMeters, 10000.0);
     });
 
     test('Does not fabricate air quality when the service has no data', () async {

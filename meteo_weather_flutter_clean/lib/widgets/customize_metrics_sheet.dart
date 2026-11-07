@@ -22,7 +22,12 @@ class _CustomizeMetricsSheetState extends State<CustomizeMetricsSheet> {
   @override
   void initState() {
     super.initState();
-    _currentMetrics = List.from(widget.metrics);
+    _currentMetrics = widget.metrics.map((metric) => MetricPreference(
+      id: metric.id,
+      titleAr: metric.titleAr,
+      isVisible: metric.isVisible,
+      order: metric.order,
+    )).toList();
   }
 
   @override

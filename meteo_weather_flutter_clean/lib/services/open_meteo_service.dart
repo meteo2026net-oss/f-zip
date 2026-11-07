@@ -23,7 +23,7 @@ class OpenMeteoService {
       'hourly': 'temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m,visibility',
       'daily': 'weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max',
       'timezone': 'auto',
-      'forecast_days': '7',
+      'forecast_days': '16',
     });
 
     try {

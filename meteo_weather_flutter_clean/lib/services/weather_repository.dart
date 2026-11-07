@@ -387,6 +387,18 @@ class WeatherRepository {
     final conditionType = mapWeatherCode(weatherCode);
     final conditionAr = getWeatherConditionText(weatherCode, isDay);
 
+    final hourlyTimesForVisibility = (hourlyObj['time'] as List<dynamic>?) ?? [];
+    final visibilityValues = (hourlyObj['visibility'] as List<dynamic>?) ?? [];
+    double? currentVisibilityMeters;
+    final currentTimeForVisibility = currentObj['time'] as String?;
+    if (currentTimeForVisibility != null) {
+      final visibilityIndex = hourlyTimesForVisibility.indexOf(currentTimeForVisibility);
+      if (visibilityIndex >= 0 && visibilityIndex < visibilityValues.length) {
+        final value = visibilityValues[visibilityIndex];
+        if (value is num) currentVisibilityMeters = value.toDouble();
+      }
+    }
+
     final currentWeather = CurrentWeather(
       time: currentObj['time'] as String? ?? "الآن",
       temperatureCelsius: temp,
@@ -399,6 +411,7 @@ class WeatherRepository {
       windSpeedKmh: windSpeed,
       windDirectionDegree: windDir,
       uvIndex: uv,
+      visibilityMeters: currentVisibilityMeters,
       conditionAr: conditionAr,
       conditionType: conditionType,
     );
@@ -455,7 +468,7 @@ class WeatherRepository {
 
     final arabicDays = ["اليوم", "غداً", "بعد غد", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
     final List<DailyForecast> dailyList = [];
-    final dCount = dailyTimes.length > 7 ? 7 : dailyTimes.length;
+    final dCount = dailyTimes.length > 16 ? 16 : dailyTimes.length;
     for (int i = 0; i < dCount; i++) {
       final dCode = i < dailyCodes.length ? (dailyCodes[i] as num).toInt() : 0;
       final dayLabel = i < arabicDays.length ? arabicDays[i] : "اليوم ${i + 1}";
@@ -487,12 +500,31 @@ class WeatherRepository {
       pm10: (aqCurrent?['pm10'] as num?)?.toDouble() ?? -1,
       recommendationAr: !hasAirQuality ? "تعذر الحصول على قراءة موثوقة لجودة الهواء." : "راجع الإرشادات الصحية المحلية وفق مستوى المؤشر.",
     );
+    String pollenLabel(num? value) {
+      if (value == null) return "غير متاح";
+      if (value < 10) return "منخفض";
+      if (value < 50) return "متوسط";
+      return "مرتفع";
+    }
+    final grassPollen = aqCurrent?['grass_pollen'] as num?;
+    final alderPollen = aqCurrent?['alder_pollen'] as num?;
+    final birchPollen = aqCurrent?['birch_pollen'] as num?;
+    final weedPollen = aqCurrent?['ragweed_pollen'] as num?;
+    final pollenValues = [grassPollen, alderPollen, birchPollen, weedPollen]
+        .whereType<num>()
+        .toList();
+    final highestPollen = pollenValues.isEmpty
+        ? null
+        : pollenValues.reduce((a, b) => a > b ? a : b);
+    final treePollen = alderPollen == null
+        ? birchPollen
+        : (birchPollen == null || alderPollen >= birchPollen ? alderPollen : birchPollen);
     final pollenInfo = PollenInfo(
-      grassLevelAr: "غير متاح",
-      treeLevelAr: "غير متاح",
-      weedLevelAr: "غير متاح",
-      overallLevelAr: "لا تتوفر بيانات لقاح موثوقة",
-      alertActive: false,
+      grassLevelAr: pollenLabel(grassPollen),
+      treeLevelAr: pollenLabel(treePollen),
+      weedLevelAr: pollenLabel(weedPollen),
+      overallLevelAr: pollenLabel(highestPollen),
+      alertActive: highestPollen != null && highestPollen >= 50,
     );
 
     // Severe Alerts

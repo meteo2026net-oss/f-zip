@@ -101,8 +101,12 @@ class WeatherMetricsGrid extends StatelessWidget {
                 icon: Icons.remove_red_eye_outlined,
                 iconColor: const Color(0xFF34D399),
                 title: "مدى الرؤية",
-                value: "غير متاح",
-                subtitle: "لا توجد قراءة رؤية مرتبطة بالساعة الحالية",
+                value: current.visibilityMeters == null
+                    ? "غير متاح"
+                    : "${(current.visibilityMeters! / 1000).toStringAsFixed(1)} كم",
+                subtitle: current.visibilityMeters == null
+                    ? "لا توجد قراءة للرؤية"
+                    : "الرؤية الأفقية وفق بيانات التوقعات",
               ),
               if (visibleIds.contains("apparent_temperature")) _buildMetricCard(
                 icon: Icons.thermostat_outlined,
