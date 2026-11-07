@@ -395,7 +395,7 @@ class WeatherRepository {
     final temp = requiredDouble('temperature_2m');
     final apparentTemp = requiredDouble('apparent_temperature');
     final humidity = requiredInt('relative_humidity_2m');
-    final isDay = requiredInt('is_day') == 1;
+    final isDayValue = requiredInt('is_day');
     final precipMm = requiredDouble('precipitation');
     final weatherCode = requiredInt('weather_code');
     final pressure = requiredDouble('surface_pressure');
@@ -406,9 +406,10 @@ class WeatherRepository {
     if (humidity < 0 || humidity > 100) {
       throw const FormatException("current.relative_humidity_2m must be between 0 and 100.");
     }
-    if (isDay != 0 && isDay != 1) {
+    if (isDayValue != 0 && isDayValue != 1) {
       throw const FormatException("current.is_day must be either 0 or 1.");
     }
+    final isDay = isDayValue == 1;
     if (precipMm < 0 || windSpeed < 0 || uv < 0) {
       throw const FormatException("Current precipitation, wind speed and UV values cannot be negative.");
     }
