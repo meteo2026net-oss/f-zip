@@ -374,16 +374,26 @@ class WeatherRepository {
     final hourlyObj = forecast['hourly'] as Map<String, dynamic>? ?? {};
     final dailyObj = forecast['daily'] as Map<String, dynamic>? ?? {};
 
-    final temp = (currentObj['temperature_2m'] as num?)?.toDouble() ?? 24.0;
-    final apparentTemp = (currentObj['apparent_temperature'] as num?)?.toDouble() ?? temp;
-    final humidity = (currentObj['relative_humidity_2m'] as num?)?.toInt() ?? 50;
-    final isDay = (currentObj['is_day'] as num?)?.toInt() == 1;
-    final precipMm = (currentObj['precipitation'] as num?)?.toDouble() ?? 0.0;
-    final weatherCode = (currentObj['weather_code'] as num?)?.toInt() ?? 0;
-    final pressure = (currentObj['surface_pressure'] as num?)?.toDouble() ?? 1013.2;
-    final windSpeed = (currentObj['wind_speed_10m'] as num?)?.toDouble() ?? 12.0;
-    final windDir = (currentObj['wind_direction_10m'] as num?)?.toDouble() ?? 270.0;
-    final uv = (currentObj['uv_index'] as num?)?.toDouble() ?? 5.0;
+    double requiredDouble(String key) {
+      final value = currentObj[key];
+      if (value is! num) {
+        throw FormatException("Missing or invalid current.$key in forecast response.");
+      }
+      return value.toDouble();
+    }
+
+    int requiredInt(String key) => requiredDouble(key).toInt();
+
+    final temp = requiredDouble('temperature_2m');
+    final apparentTemp = requiredDouble('apparent_temperature');
+    final humidity = requiredInt('relative_humidity_2m');
+    final isDay = requiredInt('is_day') == 1;
+    final precipMm = requiredDouble('precipitation');
+    final weatherCode = requiredInt('weather_code');
+    final pressure = requiredDouble('surface_pressure');
+    final windSpeed = requiredDouble('wind_speed_10m');
+    final windDir = requiredDouble('wind_direction_10m');
+    final uv = requiredDouble('uv_index');
 
     final conditionType = mapWeatherCode(weatherCode);
     final conditionAr = getWeatherConditionText(weatherCode, isDay);
@@ -438,20 +448,27 @@ class WeatherRepository {
         }
       } catch (_) { firstFutureIndex = 0; }
     }
-    final endIndex = (firstFutureIndex + 24).clamp(0, hourlyTimes.length);
+    final endIndex = (firstFutureIndex + 24).clamp(0, hourlyTimes.length).toInt();
     for (int i = firstFutureIndex; i < endIndex; i++) {
+      final temperatureValue = i < hourlyTemps.length ? hourlyTemps[i] : null;
+      final codeValue = i < hourlyCodes.length ? hourlyCodes[i] : null;
+      if (temperatureValue is! num || codeValue is! num) continue;
+
       final tStr = hourlyTimes[i].toString();
       final hourLabel = tStr.contains('T') ? "${tStr.split('T')[1].split(':')[0]}:00" : "$i:00";
-      final hCode = i < hourlyCodes.length ? (hourlyCodes[i] as num).toInt() : 0;
+      final probabilityValue = i < hourlyProbs.length ? hourlyProbs[i] : null;
+      final humidityValue = i < hourlyHumids.length ? hourlyHumids[i] : null;
+      final windValue = i < hourlyWinds.length ? hourlyWinds[i] : null;
+      final hCode = codeValue.toInt();
       hourlyList.add(
         HourlyForecast(
           time: tStr,
           hourLabel: hourLabel,
-          temperatureCelsius: i < hourlyTemps.length ? (hourlyTemps[i] as num).toDouble() : temp,
+          temperatureCelsius: temperatureValue.toDouble(),
           weatherCode: hCode,
-          precipitationProb: i < hourlyProbs.length ? (hourlyProbs[i] as num).toInt() : 0,
-          humidity: i < hourlyHumids.length ? (hourlyHumids[i] as num).toInt() : 50,
-          windSpeedKmh: i < hourlyWinds.length ? (hourlyWinds[i] as num).toDouble() : 10.0,
+          precipitationProb: probabilityValue is num ? probabilityValue.toInt() : -1,
+          humidity: humidityValue is num ? humidityValue.toInt() : -1,
+          windSpeedKmh: windValue is num ? windValue.toDouble() : -1,
           conditionType: mapWeatherCode(hCode),
         ),
       );
@@ -467,24 +484,41 @@ class WeatherRepository {
     final dailySunsets = (dailyObj['sunset'] as List<dynamic>?) ?? [];
     final dailyUvs = (dailyObj['uv_index_max'] as List<dynamic>?) ?? [];
 
-    final arabicDays = ["اليوم", "غداً", "بعد غد", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    const arabicWeekdays = ["الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"];
     final List<DailyForecast> dailyList = [];
     final dCount = dailyTimes.length > 16 ? 16 : dailyTimes.length;
     for (int i = 0; i < dCount; i++) {
-      final dCode = i < dailyCodes.length ? (dailyCodes[i] as num).toInt() : 0;
-      final dayLabel = i < arabicDays.length ? arabicDays[i] : "اليوم ${i + 1}";
+      final codeValue = i < dailyCodes.length ? dailyCodes[i] : null;
+      final maxValue = i < dailyMaxTemps.length ? dailyMaxTemps[i] : null;
+      final minValue = i < dailyMinTemps.length ? dailyMinTemps[i] : null;
+      if (codeValue is! num || maxValue is! num || minValue is! num) continue;
+
+      final dateValue = DateTime.tryParse(dailyTimes[i].toString());
+      final dayLabel = i == 0
+          ? "اليوم"
+          : (i == 1
+              ? "غداً"
+              : (dateValue == null ? "اليوم ${i + 1}" : arabicWeekdays[dateValue.weekday - 1]));
+      final probabilityValue = i < dailyProbs.length ? dailyProbs[i] : null;
+      final sunriseValue = i < dailySunrises.length ? dailySunrises[i] : null;
+      final sunsetValue = i < dailySunsets.length ? dailySunsets[i] : null;
+      final uvValue = i < dailyUvs.length ? dailyUvs[i] : null;
       dailyList.add(
         DailyForecast(
           date: dailyTimes[i].toString(),
           dayLabel: dayLabel,
-          weatherCode: dCode,
-          maxTempCelsius: i < dailyMaxTemps.length ? (dailyMaxTemps[i] as num).toDouble() : 25.0,
-          minTempCelsius: i < dailyMinTemps.length ? (dailyMinTemps[i] as num).toDouble() : 15.0,
-          precipitationProb: i < dailyProbs.length ? (dailyProbs[i] as num).toInt() : 10,
-          sunrise: i < dailySunrises.length ? (dailySunrises[i].toString().contains('T') ? dailySunrises[i].toString().split('T')[1].substring(0, 5) : "06:12") : "06:12",
-          sunset: i < dailySunsets.length ? (dailySunsets[i].toString().contains('T') ? dailySunsets[i].toString().split('T')[1].substring(0, 5) : "18:45") : "18:45",
-          uvIndexMax: i < dailyUvs.length ? (dailyUvs[i] as num).toDouble() : 6.0,
-          conditionType: mapWeatherCode(dCode),
+          weatherCode: codeValue.toInt(),
+          maxTempCelsius: maxValue.toDouble(),
+          minTempCelsius: minValue.toDouble(),
+          precipitationProb: probabilityValue is num ? probabilityValue.toInt() : -1,
+          sunrise: sunriseValue is String && sunriseValue.contains('T')
+              ? sunriseValue.split('T')[1].substring(0, 5)
+              : "--",
+          sunset: sunsetValue is String && sunsetValue.contains('T')
+              ? sunsetValue.split('T')[1].substring(0, 5)
+              : "--",
+          uvIndexMax: uvValue is num ? uvValue.toDouble() : -1,
+          conditionType: mapWeatherCode(codeValue.toInt()),
         ),
       );
     }
