@@ -1,0 +1,12 @@
+{
+  "name": "طقس MCNC",
+  "short_name": "MCNC Weather",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
+  "description": "توقعات الطقس والبيانات الجوية",
+  "orientation": "portrait",
+  "lang": "ar",
+  "dir": "rtl"
+}
