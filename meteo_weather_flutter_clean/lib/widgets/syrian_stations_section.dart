@@ -125,9 +125,9 @@ class SyrianStationsSection extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
+                const Text(
                   "--",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primary,
@@ -150,9 +150,9 @@ class SyrianStationsSection extends StatelessWidget {
                     color: AppTheme.textSecondary,
                   ),
                 ),
-                Text(
+                const Text(
                   "--",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     color: AppTheme.textMuted,
                   ),
