@@ -73,7 +73,7 @@ class _AdminDashboardSheetState extends State<AdminDashboardSheet> with SingleTi
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text("تم بث التحذير الجوي (CAP) لكافة المستخدمين بنجاح!"),
+        content: Text("أُضيف التنبيه إلى جلسة التطبيق الحالية فقط؛ لم يتم بثه إلى المستخدمين."),
         backgroundColor: Color(0xFF10B981),
       ),
     );
@@ -237,7 +237,7 @@ class _AdminDashboardSheetState extends State<AdminDashboardSheet> with SingleTi
                         child: ElevatedButton.icon(
                           onPressed: _publishAlert,
                           icon: const Icon(Icons.broadcast_on_home),
-                          label: const Text("بث التنبيه الفوري لجميع الأجهزة"),
+                          label: const Text("إضافة التنبيه محلياً (دون بث)"),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.alertEmergency,
                             foregroundColor: Colors.white,

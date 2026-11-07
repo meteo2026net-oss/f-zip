@@ -32,6 +32,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
   late AudioBulletinItem _bulletin;
   late List<MetricPreference> _metrics;
   bool _isLoading = true;
+  int _weatherRequestId = 0;
 
   @override
   void initState() {
@@ -43,17 +44,12 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
   }
 
   Future<void> _loadWeatherData() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    final data = await _repository.getFullWeather(_selectedCity);
-    if (mounted) {
-      setState(() {
-        _weatherData = data;
-        _isLoading = false;
-      });
-    }
+    final requestId = ++_weatherRequestId;
+    setState(() { _isLoading = true; });
+    final requestedCity = _selectedCity;
+    final data = await _repository.getFullWeather(requestedCity);
+    if (!mounted || requestId != _weatherRequestId) return;
+    setState(() { _weatherData = data; _isLoading = false; });
   }
 
   void _onCitySelected(CityLocation city) {
@@ -267,7 +263,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 const Text(
-                                  "MCNC Weather • الإصدار 1.0 (Flutter & Kotlin)",
+                                  "MCNC Weather • إصدار Flutter",
                                   style: TextStyle(fontSize: 10, color: AppTheme.textMuted),
                                 ),
                               ],

@@ -21,8 +21,10 @@ class _CitySearchSheetState extends State<CitySearchSheet> {
   final OpenMeteoService _apiService = OpenMeteoService();
   List<CityLocation> _searchResults = [];
   bool _isLoading = false;
+  int _searchRequestId = 0;
 
   void _onSearchChanged(String query) async {
+    final requestId = ++_searchRequestId;
     if (query.trim().isEmpty) {
       setState(() {
         _searchResults = [];
@@ -36,12 +38,11 @@ class _CitySearchSheetState extends State<CitySearchSheet> {
     });
 
     final results = await _apiService.searchCities(query);
-    if (mounted) {
-      setState(() {
-        _searchResults = results;
-        _isLoading = false;
-      });
-    }
+    if (!mounted || requestId != _searchRequestId) return;
+    setState(() {
+      _searchResults = results;
+      _isLoading = false;
+    });
   }
 
   @override

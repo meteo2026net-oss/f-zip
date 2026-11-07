@@ -252,8 +252,11 @@ class WeatherRepository {
     if (code >= 61 && code <= 65) return WeatherConditionType.RAIN;
     if (code >= 71 && code <= 77) return WeatherConditionType.SNOW;
     if (code >= 80 && code <= 82) return WeatherConditionType.HEAVY_RAIN;
+    if (code == 56 || code == 57) return WeatherConditionType.DRIZZLE;
+    if (code == 66 || code == 67) return WeatherConditionType.HEAVY_RAIN;
+    if (code == 85 || code == 86) return WeatherConditionType.SNOW;
     if (code >= 95 && code <= 99) return WeatherConditionType.THUNDERSTORM;
-    return WeatherConditionType.CLEAR;
+    return WeatherConditionType.CLOUDY;
   }
 
   static String getWeatherConditionText(int code, bool isDay) {
@@ -271,26 +274,33 @@ class WeatherRepository {
       case 51:
       case 53:
       case 55:
-        return "رذاذ متفرق";
+      case 56:
+      case 57:
+        return "رذاذ متجمد أو متفرق";
       case 61:
       case 63:
         return "أمطار معتدلة";
       case 65:
+      case 66:
+      case 67:
+        return "أمطار غزيرة أو متجمدة";
       case 80:
       case 81:
       case 82:
-        return "أمطار غزيرة ورعدية";
+        return "زخات مطر";
       case 71:
       case 73:
       case 75:
       case 77:
-        return "تساقط ثلوج";
+      case 85:
+      case 86:
+        return "تساقط ثلوج أو زخات ثلجية";
       case 95:
       case 96:
       case 99:
-        return "عواصف رعدية نشطة";
+        return "عواصف رعدية";
       default:
-        return "معتدل ومستقر";
+        return "ظاهرة جوية غير مصنفة";
     }
   }
 
@@ -362,8 +372,20 @@ class WeatherRepository {
     final hourlyWinds = (hourlyObj['wind_speed_10m'] as List<dynamic>?) ?? [];
 
     final List<HourlyForecast> hourlyList = [];
-    final count = hourlyTimes.length > 24 ? 24 : hourlyTimes.length;
-    for (int i = 0; i < count; i++) {
+    final currentTimeText = currentObj['time'] as String?;
+    var firstFutureIndex = 0;
+    if (currentTimeText != null) {
+      try {
+        final currentDateTime = DateTime.parse(currentTimeText);
+        while (firstFutureIndex < hourlyTimes.length) {
+          final hourDateTime = DateTime.parse(hourlyTimes[firstFutureIndex].toString());
+          if (!hourDateTime.isBefore(currentDateTime)) break;
+          firstFutureIndex++;
+        }
+      } catch (_) { firstFutureIndex = 0; }
+    }
+    final endIndex = (firstFutureIndex + 24).clamp(0, hourlyTimes.length);
+    for (int i = firstFutureIndex; i < endIndex; i++) {
       final tStr = hourlyTimes[i].toString();
       final hourLabel = tStr.contains('T') ? "${tStr.split('T')[1].split(':')[0]}:00" : "$i:00";
       final hCode = i < hourlyCodes.length ? (hourlyCodes[i] as num).toInt() : 0;
@@ -414,29 +436,22 @@ class WeatherRepository {
     }
 
     // Air Quality
-    int aqi = 42;
-    double pm25 = 12.0;
-    double pm10 = 25.0;
-    if (airQuality != null && airQuality.containsKey('current')) {
-      final aqCurrent = airQuality['current'] as Map<String, dynamic>;
-      aqi = (aqCurrent['european_aqi'] as num?)?.toInt() ?? 42;
-      pm25 = (aqCurrent['pm2_5'] as num?)?.toDouble() ?? 12.0;
-      pm10 = (aqCurrent['pm10'] as num?)?.toDouble() ?? 25.0;
-    }
-
+    final aqCurrent = airQuality?['current'] as Map<String, dynamic>?;
+    final aqiValue = aqCurrent?['european_aqi'] as num?;
+    final hasAirQuality = aqiValue != null;
+    final aqi = aqiValue?.toInt() ?? -1;
     final airQualityInfo = AirQualityInfo(
       aqi: aqi,
-      statusAr: aqi < 50 ? "جيد ومثالي" : (aqi < 100 ? "معتدل ومقبول" : "غير صحي للحساسين"),
-      pm25: pm25,
-      pm10: pm10,
-      recommendationAr: aqi < 50 ? "الهواء نقي، مناسب لكافة الأنشطة الخارجية والرياضة." : "يوصى بتخفيف الرياضة المجهدة خارجياً للمصابين بالربو.",
+      statusAr: !hasAirQuality ? "بيانات جودة الهواء غير متاحة" : (aqi < 50 ? "جيد" : (aqi < 100 ? "معتدل" : "مرتفع")),
+      pm25: (aqCurrent?['pm2_5'] as num?)?.toDouble() ?? -1,
+      pm10: (aqCurrent?['pm10'] as num?)?.toDouble() ?? -1,
+      recommendationAr: !hasAirQuality ? "تعذر الحصول على قراءة موثوقة لجودة الهواء." : "راجع الإرشادات الصحية المحلية وفق مستوى المؤشر.",
     );
-
     final pollenInfo = PollenInfo(
-      grassLevelAr: "منخفض",
-      treeLevelAr: "متوسط",
-      weedLevelAr: "منخفض",
-      overallLevelAr: "مستوى طبيعي ومستقر",
+      grassLevelAr: "غير متاح",
+      treeLevelAr: "غير متاح",
+      weedLevelAr: "غير متاح",
+      overallLevelAr: "لا تتوفر بيانات لقاح موثوقة",
       alertActive: false,
     );
 
@@ -505,21 +520,7 @@ class WeatherRepository {
       );
     }
 
-    // Default advisory for all Syrian users if no extreme conditions
-    if (list.isEmpty) {
-      list.add(
-        SevereWeatherAlert(
-          id: "mcnc_bulletin_${location.name}",
-          titleAr: "نشرة الاستقرار الجوي - المركز الوطني للأرصاد (MCNC)",
-          severity: AlertSeverity.ADVISORY,
-          descriptionAr: "أجواء مستقرة عموماً في أغلب المحافظات السورية مع درجات حرارة حول المعدل السنوي وسماء صافية إلى قليلة الغيوم.",
-          safetyInstructionsAr: "الأجواء مثالية للأنشطة الخارجية والتنقل بين المحافظات.",
-          source: "المركز الوطني للأرصاد الجوية والمناخ (MCNC)",
-          validUntil: "صالحة لـ 24 ساعة",
-        ),
-      );
-    }
-
+    // Do not manufacture an official-looking stability bulletin when no threshold is met.
     return list;
   }
 
