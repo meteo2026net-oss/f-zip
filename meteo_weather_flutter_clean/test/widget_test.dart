@@ -81,10 +81,11 @@ void main() {
       late Uri requestedUri;
       final client = MockClient((request) async {
         requestedUri = request.url;
-        return http.Response(jsonEncode({
-          'results': [
-            {
-              'name': 'دمشق',
+        return http.Response.bytes(
+          utf8.encode(jsonEncode({
+            'results': [
+              {
+                'name': 'دمشق',
               'country': 'سوريا',
               'latitude': 33.5138,
               'longitude': 36.2765,
@@ -109,9 +110,12 @@ void main() {
               'latitude': '30',
               'longitude': 30,
             },
-            'not-a-city',
-          ],
-        }), 200);
+              'not-a-city',
+            ],
+          })),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
       });
       final service = OpenMeteoService(client: client);
 
