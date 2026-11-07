@@ -92,10 +92,10 @@ class WeatherMetricsGrid extends StatelessWidget {
               ),
               if (visibleIds.contains("air_quality")) _buildMetricCard(
                 icon: Icons.eco_outlined,
-                iconColor: aqi.aqi < 0 ? AppTheme.textMuted : (aqi.aqi < 50 ? const Color(0xFF10B981) : const Color(0xFFF59E0B)),
-                title: "جودة الهواء (AQI)",
+                iconColor: aqi.aqi < 0 ? AppTheme.textMuted : (aqi.aqi <= 20 ? const Color(0xFF10B981) : (aqi.aqi <= 60 ? const Color(0xFFF59E0B) : AppTheme.alertWarning)),
+                title: "جودة الهواء (تقدير نمذجي)",
                 value: aqi.aqi < 0 ? "غير متاح" : "${aqi.aqi}",
-                subtitle: aqi.statusAr,
+                subtitle: aqi.aqi < 0 ? aqi.statusAr : "${aqi.statusAr} • تقدير CAMS وليس قياس محطة",
               ),
               if (visibleIds.contains("visibility")) _buildMetricCard(
                 icon: Icons.remove_red_eye_outlined,

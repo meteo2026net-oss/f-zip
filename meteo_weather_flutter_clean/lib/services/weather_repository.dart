@@ -530,16 +530,14 @@ class WeatherRepository {
     final aqi = aqiValue?.toInt() ?? -1;
     final airQualityInfo = AirQualityInfo(
       aqi: aqi,
-      statusAr: !hasAirQuality ? "بيانات جودة الهواء غير متاحة" : (aqi < 50 ? "جيد" : (aqi < 100 ? "معتدل" : "مرتفع")),
+      statusAr: !hasAirQuality ? "بيانات جودة الهواء غير متاحة" : (aqi <= 20 ? "جيد" : (aqi <= 40 ? "مقبول" : (aqi <= 60 ? "متوسط" : (aqi <= 80 ? "ضعيف" : (aqi <= 100 ? "ضعيف جداً" : "مرتفع جداً"))))),
       pm25: (aqCurrent?['pm2_5'] as num?)?.toDouble() ?? -1,
       pm10: (aqCurrent?['pm10'] as num?)?.toDouble() ?? -1,
-      recommendationAr: !hasAirQuality ? "تعذر الحصول على قراءة موثوقة لجودة الهواء." : "راجع الإرشادات الصحية المحلية وفق مستوى المؤشر.",
+      recommendationAr: !hasAirQuality ? "تعذر الحصول على تقدير نمذجي لجودة الهواء." : "هذا تقدير نمذجي من بيانات CAMS عبر Open-Meteo، وليس قياساً من محطة أرضية.",
     );
-    String pollenLabel(num? value) {
+    String pollenConcentration(num? value) {
       if (value == null) return "غير متاح";
-      if (value < 10) return "منخفض";
-      if (value < 50) return "متوسط";
-      return "مرتفع";
+      return "${value.toStringAsFixed(1)} حبة/م³";
     }
     final grassPollen = aqCurrent?['grass_pollen'] as num?;
     final alderPollen = aqCurrent?['alder_pollen'] as num?;
@@ -555,11 +553,11 @@ class WeatherRepository {
         ? birchPollen
         : (birchPollen == null || alderPollen >= birchPollen ? alderPollen : birchPollen);
     final pollenInfo = PollenInfo(
-      grassLevelAr: pollenLabel(grassPollen),
-      treeLevelAr: pollenLabel(treePollen),
-      weedLevelAr: pollenLabel(weedPollen),
-      overallLevelAr: pollenLabel(highestPollen),
-      alertActive: highestPollen != null && highestPollen >= 50,
+      grassLevelAr: pollenConcentration(grassPollen),
+      treeLevelAr: pollenConcentration(treePollen),
+      weedLevelAr: pollenConcentration(weedPollen),
+      overallLevelAr: pollenValues.isEmpty ? "غير متاح" : "تركيز متاح - دون تصنيف صحي",
+      alertActive: false,
     );
 
     // Severe Alerts
