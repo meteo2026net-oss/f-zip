@@ -20,7 +20,7 @@ class OpenMeteoService {
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
       'current': 'temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,uv_index',
-      'hourly': 'temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m,visibility',
+      'hourly': 'temperature_2m,relative_humidity_2m,precipitation_probability,weather_code,wind_speed_10m,visibility,is_day',
       'daily': 'weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max',
       'timezone': 'auto',
       'forecast_days': '16',
