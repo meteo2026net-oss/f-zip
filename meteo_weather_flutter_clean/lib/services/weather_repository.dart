@@ -24,6 +24,9 @@ class WeatherRepository {
     _prefs ??= await SharedPreferences.getInstance();
   }
 
+  /// Releases the underlying HTTP client when the application scope ends.
+  void dispose() => _apiService.dispose();
+
   // Default Syrian Cities
   static final List<CityLocation> defaultSyrianCities = [
     CityLocation(name: "دمشق", country: "سوريا", latitude: 33.5138, longitude: 36.2765, isFavorite: true, admin1: "محافظة دمشق"),
