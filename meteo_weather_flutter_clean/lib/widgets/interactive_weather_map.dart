@@ -78,12 +78,12 @@ class InteractiveWeatherMap extends StatelessWidget {
                   painter: _RadarGridPainter(),
                 ),
                 // Station Markers mapped roughly to coordinates in Syria
-                _buildStationPin(context, stations.firstWhere((s) => s.id == "st_damascus", orElse: () => stations[0]), 0.45, 0.65),
-                _buildStationPin(context, stations.firstWhere((s) => s.id == "st_aleppo", orElse: () => stations[1]), 0.48, 0.25),
-                _buildStationPin(context, stations.firstWhere((s) => s.id == "st_latakia", orElse: () => stations[2]), 0.25, 0.38),
-                _buildStationPin(context, stations.firstWhere((s) => s.id == "st_homs", orElse: () => stations[3]), 0.42, 0.52),
-                _buildStationPin(context, stations.firstWhere((s) => s.id == "st_deir", orElse: () => stations[6]), 0.75, 0.45),
-                _buildStationPin(context, stations.firstWhere((s) => s.id == "st_palmyra", orElse: () => stations[12]), 0.58, 0.55),
+                _buildStationPinIfPresent(context, "st_damascus", 0.45, 0.65),
+                _buildStationPinIfPresent(context, "st_aleppo", 0.48, 0.25),
+                _buildStationPinIfPresent(context, "st_latakia", 0.25, 0.38),
+                _buildStationPinIfPresent(context, "st_homs", 0.42, 0.52),
+                _buildStationPinIfPresent(context, "st_deir", 0.75, 0.45),
+                _buildStationPinIfPresent(context, "st_palmyra", 0.58, 0.55),
 
                 // Radar Legend
                 Positioned(
@@ -115,6 +115,24 @@ class InteractiveWeatherMap extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  SyrianWeatherStation? _findStation(String id) {
+    for (final station in stations) {
+      if (station.id == id) return station;
+    }
+    return null;
+  }
+
+  Widget _buildStationPinIfPresent(
+    BuildContext context,
+    String stationId,
+    double xPercent,
+    double yPercent,
+  ) {
+    final station = _findStation(stationId);
+    if (station == null) return const SizedBox.shrink();
+    return _buildStationPin(context, station, xPercent, yPercent);
   }
 
   Widget _buildStationPin(BuildContext context, SyrianWeatherStation station, double xPercent, double yPercent) {
