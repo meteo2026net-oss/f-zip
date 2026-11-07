@@ -2,15 +2,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/weather_models.dart';
 import 'open_meteo_service.dart';
 
+class WeatherDataUnavailableException implements Exception {
+  final String message;
+  const WeatherDataUnavailableException(this.message);
+  @override
+  String toString() => message;
+}
+
 class WeatherRepository {
   final OpenMeteoService _apiService;
-  final SharedPreferences? _prefs;
+  SharedPreferences? _prefs;
 
   WeatherRepository({
     OpenMeteoService? apiService,
     SharedPreferences? prefs,
   })  : _apiService = apiService ?? OpenMeteoService(),
         _prefs = prefs;
+
+  Future<void> initializePreferences() async {
+    _prefs ??= await SharedPreferences.getInstance();
+  }
 
   // Default Syrian Cities
   static final List<CityLocation> defaultSyrianCities = [
@@ -310,18 +321,17 @@ class WeatherRepository {
       latitude: location.latitude,
       longitude: location.longitude,
     );
+    if (forecastJson == null) {
+      throw const WeatherDataUnavailableException(
+        "تعذر جلب بيانات الطقس من خدمة التوقعات.",
+      );
+    }
 
     final airQualityJson = await _apiService.fetchAirQuality(
       latitude: location.latitude,
       longitude: location.longitude,
     );
-
-    if (forecastJson != null) {
-      return _parseFullWeatherData(location, forecastJson, airQualityJson);
-    }
-
-    // Fallback simulation if offline or error
-    return _generateFallbackWeatherData(location);
+    return _parseFullWeatherData(location, forecastJson, airQualityJson);
   }
 
   FullWeatherData _parseFullWeatherData(
@@ -524,55 +534,5 @@ class WeatherRepository {
     return list;
   }
 
-  FullWeatherData _generateFallbackWeatherData(CityLocation location) {
-    final current = CurrentWeather(
-      time: "الآن",
-      temperatureCelsius: 24.5,
-      apparentTemperatureCelsius: 25.0,
-      humidity: 48,
-      isDay: true,
-      precipitationMm: 0.0,
-      weatherCode: 0,
-      pressureHpa: 1014.0,
-      windSpeedKmh: 14.5,
-      windDirectionDegree: 280.0,
-      uvIndex: 5.5,
-      conditionAr: "صافٍ ومشرق",
-      conditionType: WeatherConditionType.CLEAR,
-    );
 
-    final List<HourlyForecast> hourly = List.generate(24, (i) {
-      return HourlyForecast(
-        time: "$i:00",
-        hourLabel: "${(i % 12 == 0 ? 12 : i % 12)} ${i < 12 ? 'ص' : 'م'}",
-        temperatureCelsius: 22.0 + (i > 6 && i < 16 ? (i - 6) * 0.8 : -(i % 4) * 0.5),
-        weatherCode: 0,
-        precipitationProb: (i * 3) % 20,
-        humidity: 45 + (i % 10),
-        windSpeedKmh: 12.0 + (i % 5),
-        conditionType: WeatherConditionType.CLEAR,
-      );
-    });
-
-    final List<DailyForecast> daily = [
-      DailyForecast(date: "2026-11-07", dayLabel: "اليوم", weatherCode: 0, maxTempCelsius: 26.0, minTempCelsius: 16.0, precipitationProb: 5, sunrise: "06:14", sunset: "18:42", uvIndexMax: 6.0, conditionType: WeatherConditionType.CLEAR),
-      DailyForecast(date: "2026-11-08", dayLabel: "غداً", weatherCode: 1, maxTempCelsius: 25.0, minTempCelsius: 15.0, precipitationProb: 10, sunrise: "06:15", sunset: "18:41", uvIndexMax: 5.8, conditionType: WeatherConditionType.PARTLY_CLOUDY),
-      DailyForecast(date: "2026-11-09", dayLabel: "الأحد", weatherCode: 2, maxTempCelsius: 24.0, minTempCelsius: 14.0, precipitationProb: 20, sunrise: "06:16", sunset: "18:40", uvIndexMax: 5.2, conditionType: WeatherConditionType.PARTLY_CLOUDY),
-      DailyForecast(date: "2026-11-10", dayLabel: "الإثنين", weatherCode: 61, maxTempCelsius: 21.0, minTempCelsius: 13.0, precipitationProb: 65, sunrise: "06:17", sunset: "18:39", uvIndexMax: 3.5, conditionType: WeatherConditionType.RAIN),
-      DailyForecast(date: "2026-11-11", dayLabel: "الثلاثاء", weatherCode: 80, maxTempCelsius: 19.0, minTempCelsius: 12.0, precipitationProb: 75, sunrise: "06:18", sunset: "18:38", uvIndexMax: 3.0, conditionType: WeatherConditionType.HEAVY_RAIN),
-      DailyForecast(date: "2026-11-12", dayLabel: "الأربعاء", weatherCode: 2, maxTempCelsius: 22.0, minTempCelsius: 13.0, precipitationProb: 15, sunrise: "06:19", sunset: "18:37", uvIndexMax: 5.0, conditionType: WeatherConditionType.PARTLY_CLOUDY),
-      DailyForecast(date: "2026-11-13", dayLabel: "الخميس", weatherCode: 0, maxTempCelsius: 23.5, minTempCelsius: 14.0, precipitationProb: 10, sunrise: "06:20", sunset: "18:36", uvIndexMax: 5.6, conditionType: WeatherConditionType.CLEAR),
-    ];
-
-    return FullWeatherData(
-      location: location,
-      current: current,
-      hourlyList: hourly,
-      dailyList: daily,
-      airQuality: AirQualityInfo(aqi: 38, statusAr: "جيد ونقي", pm25: 9.5, pm10: 18.0, recommendationAr: "الهواء نقي وصحي في سماء ${location.name}."),
-      pollen: PollenInfo(grassLevelAr: "منخفض", treeLevelAr: "منخفض", weedLevelAr: "منخفض", overallLevelAr: "مستوى طبيعي ومستقر", alertActive: false),
-      alerts: _detectSevereAlerts(location, current, daily, 38),
-      lastUpdated: "الوضع الاحتياطي - بيانات محاكاة المركز",
-    );
-  }
 }

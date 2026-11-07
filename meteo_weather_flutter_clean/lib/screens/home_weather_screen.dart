@@ -32,6 +32,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
   late AudioBulletinItem _bulletin;
   late List<MetricPreference> _metrics;
   bool _isLoading = true;
+  String? _loadError;
   int _weatherRequestId = 0;
 
   @override
@@ -40,21 +41,45 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
     _stations = _repository.getSyrianWeatherStations();
     _bulletin = _repository.getAudioBulletin();
     _metrics = _repository.getMetricPreferences();
-    _loadWeatherData();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    await _repository.initializePreferences();
+    if (!mounted) return;
+    setState(() {
+      _bulletin = _repository.getAudioBulletin();
+      _metrics = _repository.getMetricPreferences();
+    });
+    await _loadWeatherData();
   }
 
   Future<void> _loadWeatherData() async {
     final requestId = ++_weatherRequestId;
     setState(() { _isLoading = true; });
     final requestedCity = _selectedCity;
-    final data = await _repository.getFullWeather(requestedCity);
-    if (!mounted || requestId != _weatherRequestId) return;
-    setState(() { _weatherData = data; _isLoading = false; });
+    try {
+      final data = await _repository.getFullWeather(requestedCity);
+      if (!mounted || requestId != _weatherRequestId) return;
+      setState(() {
+        _weatherData = data;
+        _loadError = null;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted || requestId != _weatherRequestId) return;
+      setState(() {
+        _loadError = "تعذر تحميل بيانات الطقس حالياً. تحقق من الاتصال ثم أعد المحاولة.";
+        _isLoading = false;
+      });
+    }
   }
 
   void _onCitySelected(CityLocation city) {
     setState(() {
       _selectedCity = city;
+      _weatherData = null;
+      _loadError = null;
     });
     _loadWeatherData();
   }
@@ -205,7 +230,31 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                 ? const Center(
                     child: CircularProgressIndicator(color: AppTheme.primary),
                   )
-                : RefreshIndicator(
+                : _weatherData == null
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.cloud_off, color: AppTheme.textMuted, size: 42),
+                              const SizedBox(height: 12),
+                              Text(
+                                _loadError ?? "لا توجد بيانات طقس متاحة.",
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: AppTheme.textSecondary),
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                onPressed: _loadWeatherData,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text("إعادة المحاولة"),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : RefreshIndicator(
                     onRefresh: _loadWeatherData,
                     color: AppTheme.primary,
                     child: SingleChildScrollView(
