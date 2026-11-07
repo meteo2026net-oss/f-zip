@@ -1,16 +1,31 @@
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/weather_models.dart';
 import 'open_meteo_service.dart';
 
+class WeatherDataUnavailableException implements Exception {
+  final String message;
+  const WeatherDataUnavailableException(this.message);
+  @override
+  String toString() => message;
+}
+
 class WeatherRepository {
   final OpenMeteoService _apiService;
-  final SharedPreferences? _prefs;
+  SharedPreferences? _prefs;
 
   WeatherRepository({
     OpenMeteoService? apiService,
     SharedPreferences? prefs,
   })  : _apiService = apiService ?? OpenMeteoService(),
         _prefs = prefs;
+
+  Future<void> initializePreferences() async {
+    _prefs ??= await SharedPreferences.getInstance();
+  }
+
+  /// Releases the underlying HTTP client when the application scope ends.
+  void dispose() => _apiService.dispose();
 
   // Default Syrian Cities
   static final List<CityLocation> defaultSyrianCities = [
@@ -29,7 +44,7 @@ class WeatherRepository {
     CityLocation(name: "تدمر", country: "سوريا", latitude: 34.5577, longitude: 38.2753, isFavorite: false, admin1: "بادية حمص"),
   ];
 
-  // Official Syrian Weather Stations
+  // Placeholder station locations; live MCNC feeds are not connected.
   List<SyrianWeatherStation> getSyrianWeatherStations() {
     return [
       SyrianWeatherStation(
@@ -207,16 +222,16 @@ class WeatherRepository {
   // Audio Bulletin
   AudioBulletinItem getAudioBulletin() {
     final title = _prefs?.getString("admin_bulletin_title") ??
-        "النشرة الجوية الصباحية الشاملة - المركز الوطني للأرصاد والمناخ";
+        "نشرة تجريبية - غير معتمدة";
     final script = _prefs?.getString("admin_bulletin_script") ??
-        "تستمر درجات الحرارة حول معدلاتها لمثل هذه الفترة من السنة، والجو صيفياً مائلاً للاعتدال في المناطق الجبلية وحاراً نسبياً في البادية والشرقية، مع ظهور بعض السحب المتفرقة على الساحل السوري وتكون الرياح غربية إلى شمالية غربية معتدلة السرعة تنشط أحياناً بعد الظهر. تحذير من التعرض المباشر لأشعة الشمس في أوقات الذروة.";
+        "هذه نشرة تجريبية لواجهة التطبيق، وليست نشرة رسمية أو مبنية على بيانات الطقس الحالية. عند ربط مصدر النشرات المعتمد ستظهر هنا النشرة الموثوقة.";
 
     return AudioBulletinItem(
       id: "bulletin_mcnc_01",
       title: title,
-      dateFormatted: "اليوم، 07:30 صباحاً",
+      dateFormatted: "نص افتراضي - غير مسجل",
       durationSec: 54,
-      announcerName: "رئيس قسم التنبؤات (MCNC)",
+      announcerName: "قراءة آلية محلية",
       bulletinScriptAr: script,
     );
   }
@@ -230,16 +245,45 @@ class WeatherRepository {
 
   // Metric Preferences
   List<MetricPreference> getMetricPreferences() {
-    return [
+    final defaults = <MetricPreference>[
       MetricPreference(id: "humidity", titleAr: "الرطوبة النسبية", order: 1),
       MetricPreference(id: "wind", titleAr: "سرعة واتجاه الرياح", order: 2),
       MetricPreference(id: "pressure", titleAr: "الضغط الجوي", order: 3),
       MetricPreference(id: "uv", titleAr: "مؤشر الأشعة فوق البنفسجية", order: 4),
       MetricPreference(id: "air_quality", titleAr: "جودة الهواء والبيئة", order: 5),
       MetricPreference(id: "visibility", titleAr: "مدى الرؤية الأفقية", order: 6),
-      MetricPreference(id: "dew_point", titleAr: "نقطة الندى", order: 7),
+      MetricPreference(id: "apparent_temperature", titleAr: "الحرارة المحسوسة", order: 7),
       MetricPreference(id: "pollen", titleAr: "حبوب اللقاح والحساسية", order: 8),
     ];
+    final raw = _prefs?.getString("metric_preferences");
+    if (raw == null) return defaults;
+    try {
+      final stored = jsonDecode(raw) as List<dynamic>;
+      final byId = <String, Map<String, dynamic>>{
+        for (final item in stored)
+          if (item is Map<String, dynamic> && item['id'] is String)
+            item['id'] as String: item,
+      };
+      for (final metric in defaults) {
+        final saved = byId[metric.id];
+        if (saved == null) continue;
+        metric.isVisible = saved['isVisible'] == true;
+        metric.order = (saved['order'] as num?)?.toInt() ?? metric.order;
+      }
+      defaults.sort((a, b) => a.order.compareTo(b.order));
+    } catch (_) {
+      return defaults;
+    }
+    return defaults;
+  }
+
+  Future<void> saveMetricPreferences(List<MetricPreference> metrics) async {
+    final payload = metrics.map((metric) => {
+      "id": metric.id,
+      "isVisible": metric.isVisible,
+      "order": metric.order,
+    }).toList();
+    await _prefs?.setString("metric_preferences", jsonEncode(payload));
   }
 
   // WMO Code translation
@@ -252,8 +296,11 @@ class WeatherRepository {
     if (code >= 61 && code <= 65) return WeatherConditionType.RAIN;
     if (code >= 71 && code <= 77) return WeatherConditionType.SNOW;
     if (code >= 80 && code <= 82) return WeatherConditionType.HEAVY_RAIN;
+    if (code == 56 || code == 57) return WeatherConditionType.DRIZZLE;
+    if (code == 66 || code == 67) return WeatherConditionType.HEAVY_RAIN;
+    if (code == 85 || code == 86) return WeatherConditionType.SNOW;
     if (code >= 95 && code <= 99) return WeatherConditionType.THUNDERSTORM;
-    return WeatherConditionType.CLEAR;
+    return WeatherConditionType.CLOUDY;
   }
 
   static String getWeatherConditionText(int code, bool isDay) {
@@ -272,46 +319,59 @@ class WeatherRepository {
       case 53:
       case 55:
         return "رذاذ متفرق";
+      case 56:
+      case 57:
+        return "رذاذ متجمد";
       case 61:
       case 63:
         return "أمطار معتدلة";
       case 65:
+      case 66:
+      case 67:
+        return "أمطار غزيرة أو متجمدة";
       case 80:
       case 81:
       case 82:
-        return "أمطار غزيرة ورعدية";
+        return "زخات مطر";
       case 71:
       case 73:
       case 75:
       case 77:
-        return "تساقط ثلوج";
+      case 85:
+      case 86:
+        return "تساقط ثلوج أو زخات ثلجية";
       case 95:
       case 96:
       case 99:
-        return "عواصف رعدية نشطة";
+        return "عواصف رعدية";
       default:
-        return "معتدل ومستقر";
+        return "ظاهرة جوية غير مصنفة";
     }
   }
 
   // Full Weather fetcher
   Future<FullWeatherData> getFullWeather(CityLocation location) async {
-    final forecastJson = await _apiService.fetchForecast(
-      latitude: location.latitude,
-      longitude: location.longitude,
-    );
-
-    final airQualityJson = await _apiService.fetchAirQuality(
-      latitude: location.latitude,
-      longitude: location.longitude,
-    );
-
-    if (forecastJson != null) {
-      return _parseFullWeatherData(location, forecastJson, airQualityJson);
+    // Forecast and air-quality endpoints are independent; request them together
+    // to avoid adding the two network latencies to every screen refresh.
+    final responses = await Future.wait<Map<String, dynamic>?>([
+      _apiService.fetchForecast(
+        latitude: location.latitude,
+        longitude: location.longitude,
+      ),
+      _apiService.fetchAirQuality(
+        latitude: location.latitude,
+        longitude: location.longitude,
+      ),
+    ]);
+    final forecastJson = responses[0];
+    final airQualityJson = responses[1];
+    if (forecastJson == null) {
+      throw const WeatherDataUnavailableException(
+        "تعذر جلب بيانات الطقس من خدمة التوقعات.",
+      );
     }
 
-    // Fallback simulation if offline or error
-    return _generateFallbackWeatherData(location);
+    return _parseFullWeatherData(location, forecastJson, airQualityJson);
   }
 
   FullWeatherData _parseFullWeatherData(
@@ -323,19 +383,77 @@ class WeatherRepository {
     final hourlyObj = forecast['hourly'] as Map<String, dynamic>? ?? {};
     final dailyObj = forecast['daily'] as Map<String, dynamic>? ?? {};
 
-    final temp = (currentObj['temperature_2m'] as num?)?.toDouble() ?? 24.0;
-    final apparentTemp = (currentObj['apparent_temperature'] as num?)?.toDouble() ?? temp;
-    final humidity = (currentObj['relative_humidity_2m'] as num?)?.toInt() ?? 50;
-    final isDay = (currentObj['is_day'] as num?)?.toInt() == 1;
-    final precipMm = (currentObj['precipitation'] as num?)?.toDouble() ?? 0.0;
-    final weatherCode = (currentObj['weather_code'] as num?)?.toInt() ?? 0;
-    final pressure = (currentObj['surface_pressure'] as num?)?.toDouble() ?? 1013.2;
-    final windSpeed = (currentObj['wind_speed_10m'] as num?)?.toDouble() ?? 12.0;
-    final windDir = (currentObj['wind_direction_10m'] as num?)?.toDouble() ?? 270.0;
-    final uv = (currentObj['uv_index'] as num?)?.toDouble() ?? 5.0;
+    double requiredDouble(String key) {
+      final value = currentObj[key];
+      if (value is! num || !value.isFinite) {
+        throw FormatException("Missing or invalid current.$key in forecast response.");
+      }
+      return value.toDouble();
+    }
+
+    int requiredInt(String key) {
+      final value = currentObj[key];
+      if (value is! num ||
+          !value.isFinite ||
+          value != value.roundToDouble()) {
+        throw FormatException("Missing or invalid integer current.$key in forecast response.");
+      }
+      return value.toInt();
+    }
+
+    final temp = requiredDouble('temperature_2m');
+    final apparentTemp = requiredDouble('apparent_temperature');
+    final humidity = requiredInt('relative_humidity_2m');
+    final isDayValue = requiredInt('is_day');
+    final precipMm = requiredDouble('precipitation');
+    final weatherCode = requiredInt('weather_code');
+    final pressure = requiredDouble('surface_pressure');
+    final windSpeed = requiredDouble('wind_speed_10m');
+    final windDir = requiredDouble('wind_direction_10m');
+    final uv = requiredDouble('uv_index');
+
+    if (humidity < 0 || humidity > 100) {
+      throw const FormatException("current.relative_humidity_2m must be between 0 and 100.");
+    }
+    if (isDayValue != 0 && isDayValue != 1) {
+      throw const FormatException("current.is_day must be either 0 or 1.");
+    }
+    final isDay = isDayValue == 1;
+    if (precipMm < 0 || windSpeed < 0 || uv < 0) {
+      throw const FormatException("Current precipitation, wind speed and UV values cannot be negative.");
+    }
+    if (windDir < 0 || windDir > 360) {
+      throw const FormatException("current.wind_direction_10m must be between 0 and 360.");
+    }
 
     final conditionType = mapWeatherCode(weatherCode);
     final conditionAr = getWeatherConditionText(weatherCode, isDay);
+
+    final hourlyTimesForVisibility = (hourlyObj['time'] as List<dynamic>?) ?? [];
+    final visibilityValues = (hourlyObj['visibility'] as List<dynamic>?) ?? [];
+    double? currentVisibilityMeters;
+    final currentTimeForVisibility = currentObj['time'] as String?;
+    if (currentTimeForVisibility != null) {
+      final currentDateTime = DateTime.tryParse(currentTimeForVisibility);
+      if (currentDateTime != null) {
+        Duration? closestDifference;
+        for (var i = 0; i < hourlyTimesForVisibility.length && i < visibilityValues.length; i++) {
+          final hourlyDateTime = DateTime.tryParse(hourlyTimesForVisibility[i].toString());
+          final value = visibilityValues[i];
+          if (hourlyDateTime == null || value is! num) continue;
+          final difference = hourlyDateTime.difference(currentDateTime).abs();
+          if (closestDifference == null || difference < closestDifference) {
+            closestDifference = difference;
+            currentVisibilityMeters = value.toDouble();
+          }
+        }
+        // Current conditions can be reported between hourly forecast timestamps.
+        // Do not label a distant hourly value as the current visibility.
+        if (closestDifference == null || closestDifference > const Duration(minutes: 90)) {
+          currentVisibilityMeters = null;
+        }
+      }
+    }
 
     final currentWeather = CurrentWeather(
       time: currentObj['time'] as String? ?? "الآن",
@@ -349,6 +467,7 @@ class WeatherRepository {
       windSpeedKmh: windSpeed,
       windDirectionDegree: windDir,
       uvIndex: uv,
+      visibilityMeters: currentVisibilityMeters,
       conditionAr: conditionAr,
       conditionType: conditionType,
     );
@@ -360,23 +479,46 @@ class WeatherRepository {
     final hourlyProbs = (hourlyObj['precipitation_probability'] as List<dynamic>?) ?? [];
     final hourlyHumids = (hourlyObj['relative_humidity_2m'] as List<dynamic>?) ?? [];
     final hourlyWinds = (hourlyObj['wind_speed_10m'] as List<dynamic>?) ?? [];
+    final hourlyIsDays = (hourlyObj['is_day'] as List<dynamic>?) ?? [];
 
     final List<HourlyForecast> hourlyList = [];
-    final count = hourlyTimes.length > 24 ? 24 : hourlyTimes.length;
-    for (int i = 0; i < count; i++) {
+    final currentTimeText = currentObj['time'] as String?;
+    var firstFutureIndex = 0;
+    if (currentTimeText != null) {
+      try {
+        final currentDateTime = DateTime.parse(currentTimeText);
+        while (firstFutureIndex < hourlyTimes.length) {
+          final hourDateTime = DateTime.parse(hourlyTimes[firstFutureIndex].toString());
+          if (!hourDateTime.isBefore(currentDateTime)) break;
+          firstFutureIndex++;
+        }
+      } catch (_) { firstFutureIndex = 0; }
+    }
+    final endIndex = (firstFutureIndex + 24).clamp(0, hourlyTimes.length).toInt();
+    for (int i = firstFutureIndex; i < endIndex; i++) {
+      final temperatureValue = i < hourlyTemps.length ? hourlyTemps[i] : null;
+      final codeValue = i < hourlyCodes.length ? hourlyCodes[i] : null;
+      if (temperatureValue is! num || codeValue is! num) continue;
+
       final tStr = hourlyTimes[i].toString();
       final hourLabel = tStr.contains('T') ? "${tStr.split('T')[1].split(':')[0]}:00" : "$i:00";
-      final hCode = i < hourlyCodes.length ? (hourlyCodes[i] as num).toInt() : 0;
+      final probabilityValue = i < hourlyProbs.length ? hourlyProbs[i] : null;
+      final humidityValue = i < hourlyHumids.length ? hourlyHumids[i] : null;
+      final windValue = i < hourlyWinds.length ? hourlyWinds[i] : null;
+      final hCode = codeValue.toInt();
       hourlyList.add(
         HourlyForecast(
           time: tStr,
           hourLabel: hourLabel,
-          temperatureCelsius: i < hourlyTemps.length ? (hourlyTemps[i] as num).toDouble() : temp,
+          temperatureCelsius: temperatureValue.toDouble(),
           weatherCode: hCode,
-          precipitationProb: i < hourlyProbs.length ? (hourlyProbs[i] as num).toInt() : 0,
-          humidity: i < hourlyHumids.length ? (hourlyHumids[i] as num).toInt() : 50,
-          windSpeedKmh: i < hourlyWinds.length ? (hourlyWinds[i] as num).toDouble() : 10.0,
+          precipitationProb: probabilityValue is num ? probabilityValue.toInt() : -1,
+          humidity: humidityValue is num ? humidityValue.toInt() : -1,
+          windSpeedKmh: windValue is num ? windValue.toDouble() : -1,
           conditionType: mapWeatherCode(hCode),
+          isDay: i < hourlyIsDays.length && hourlyIsDays[i] is num
+              ? (hourlyIsDays[i] as num).toInt() == 1
+              : false,
         ),
       );
     }
@@ -391,52 +533,78 @@ class WeatherRepository {
     final dailySunsets = (dailyObj['sunset'] as List<dynamic>?) ?? [];
     final dailyUvs = (dailyObj['uv_index_max'] as List<dynamic>?) ?? [];
 
-    final arabicDays = ["اليوم", "غداً", "بعد غد", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    const arabicWeekdays = ["الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"];
     final List<DailyForecast> dailyList = [];
-    final dCount = dailyTimes.length > 7 ? 7 : dailyTimes.length;
+    final dCount = dailyTimes.length > 16 ? 16 : dailyTimes.length;
     for (int i = 0; i < dCount; i++) {
-      final dCode = i < dailyCodes.length ? (dailyCodes[i] as num).toInt() : 0;
-      final dayLabel = i < arabicDays.length ? arabicDays[i] : "اليوم ${i + 1}";
+      final codeValue = i < dailyCodes.length ? dailyCodes[i] : null;
+      final maxValue = i < dailyMaxTemps.length ? dailyMaxTemps[i] : null;
+      final minValue = i < dailyMinTemps.length ? dailyMinTemps[i] : null;
+      if (codeValue is! num || maxValue is! num || minValue is! num) continue;
+
+      final dateValue = DateTime.tryParse(dailyTimes[i].toString());
+      final dayLabel = i == 0
+          ? "اليوم"
+          : (i == 1
+              ? "غداً"
+              : (dateValue == null
+                  ? "اليوم ${i + 1}"
+                  : "${arabicWeekdays[dateValue.weekday - 1]} ${dateValue.day}/${dateValue.month}"));
+      final probabilityValue = i < dailyProbs.length ? dailyProbs[i] : null;
+      final sunriseValue = i < dailySunrises.length ? dailySunrises[i] : null;
+      final sunsetValue = i < dailySunsets.length ? dailySunsets[i] : null;
+      final uvValue = i < dailyUvs.length ? dailyUvs[i] : null;
       dailyList.add(
         DailyForecast(
           date: dailyTimes[i].toString(),
           dayLabel: dayLabel,
-          weatherCode: dCode,
-          maxTempCelsius: i < dailyMaxTemps.length ? (dailyMaxTemps[i] as num).toDouble() : 25.0,
-          minTempCelsius: i < dailyMinTemps.length ? (dailyMinTemps[i] as num).toDouble() : 15.0,
-          precipitationProb: i < dailyProbs.length ? (dailyProbs[i] as num).toInt() : 10,
-          sunrise: i < dailySunrises.length ? (dailySunrises[i].toString().contains('T') ? dailySunrises[i].toString().split('T')[1].substring(0, 5) : "06:12") : "06:12",
-          sunset: i < dailySunsets.length ? (dailySunsets[i].toString().contains('T') ? dailySunsets[i].toString().split('T')[1].substring(0, 5) : "18:45") : "18:45",
-          uvIndexMax: i < dailyUvs.length ? (dailyUvs[i] as num).toDouble() : 6.0,
-          conditionType: mapWeatherCode(dCode),
+          weatherCode: codeValue.toInt(),
+          maxTempCelsius: maxValue.toDouble(),
+          minTempCelsius: minValue.toDouble(),
+          precipitationProb: probabilityValue is num ? probabilityValue.toInt() : -1,
+          sunrise: sunriseValue is String && sunriseValue.contains('T')
+              ? sunriseValue.split('T')[1].substring(0, 5)
+              : "--",
+          sunset: sunsetValue is String && sunsetValue.contains('T')
+              ? sunsetValue.split('T')[1].substring(0, 5)
+              : "--",
+          uvIndexMax: uvValue is num ? uvValue.toDouble() : -1,
+          conditionType: mapWeatherCode(codeValue.toInt()),
         ),
       );
     }
 
     // Air Quality
-    int aqi = 42;
-    double pm25 = 12.0;
-    double pm10 = 25.0;
-    if (airQuality != null && airQuality.containsKey('current')) {
-      final aqCurrent = airQuality['current'] as Map<String, dynamic>;
-      aqi = (aqCurrent['european_aqi'] as num?)?.toInt() ?? 42;
-      pm25 = (aqCurrent['pm2_5'] as num?)?.toDouble() ?? 12.0;
-      pm10 = (aqCurrent['pm10'] as num?)?.toDouble() ?? 25.0;
-    }
-
+    final aqCurrent = airQuality?['current'] as Map<String, dynamic>?;
+    final aqiValue = aqCurrent?['european_aqi'] as num?;
+    final hasAirQuality = aqiValue != null;
+    final aqi = aqiValue?.toInt() ?? -1;
     final airQualityInfo = AirQualityInfo(
       aqi: aqi,
-      statusAr: aqi < 50 ? "جيد ومثالي" : (aqi < 100 ? "معتدل ومقبول" : "غير صحي للحساسين"),
-      pm25: pm25,
-      pm10: pm10,
-      recommendationAr: aqi < 50 ? "الهواء نقي، مناسب لكافة الأنشطة الخارجية والرياضة." : "يوصى بتخفيف الرياضة المجهدة خارجياً للمصابين بالربو.",
+      statusAr: !hasAirQuality ? "بيانات جودة الهواء غير متاحة" : (aqi <= 20 ? "جيد" : (aqi <= 40 ? "مقبول" : (aqi <= 60 ? "متوسط" : (aqi <= 80 ? "ضعيف" : (aqi <= 100 ? "ضعيف جداً" : "مرتفع جداً"))))),
+      pm25: (aqCurrent?['pm2_5'] as num?)?.toDouble() ?? -1,
+      pm10: (aqCurrent?['pm10'] as num?)?.toDouble() ?? -1,
+      recommendationAr: !hasAirQuality ? "تعذر الحصول على تقدير نمذجي لجودة الهواء." : "هذا تقدير نمذجي من بيانات CAMS عبر Open-Meteo، وليس قياساً من محطة أرضية.",
     );
-
+    String pollenConcentration(num? value) {
+      if (value == null) return "غير متاح";
+      return "${value.toStringAsFixed(1)} حبة/م³";
+    }
+    final grassPollen = aqCurrent?['grass_pollen'] as num?;
+    final alderPollen = aqCurrent?['alder_pollen'] as num?;
+    final birchPollen = aqCurrent?['birch_pollen'] as num?;
+    final weedPollen = aqCurrent?['ragweed_pollen'] as num?;
+    final pollenValues = [grassPollen, alderPollen, birchPollen, weedPollen]
+        .whereType<num>()
+        .toList();
+    final treePollen = alderPollen == null
+        ? birchPollen
+        : (birchPollen == null || alderPollen >= birchPollen ? alderPollen : birchPollen);
     final pollenInfo = PollenInfo(
-      grassLevelAr: "منخفض",
-      treeLevelAr: "متوسط",
-      weedLevelAr: "منخفض",
-      overallLevelAr: "مستوى طبيعي ومستقر",
+      grassLevelAr: pollenConcentration(grassPollen),
+      treeLevelAr: pollenConcentration(treePollen),
+      weedLevelAr: pollenConcentration(weedPollen),
+      overallLevelAr: pollenValues.isEmpty ? "غير متاح" : "تركيز متاح - دون تصنيف صحي",
       alertActive: false,
     );
 
@@ -451,7 +619,7 @@ class WeatherRepository {
       airQuality: airQualityInfo,
       pollen: pollenInfo,
       alerts: alerts,
-      lastUpdated: "محدث الآن - شبكة الأرصاد السورية",
+      lastUpdated: "المصدر: Open-Meteo • وقت القراءة: ${currentWeather.time}",
     );
   }
 
@@ -467,12 +635,12 @@ class WeatherRepository {
       list.add(
         SevereWeatherAlert(
           id: "thunderstorm_${location.name}",
-          titleAr: "تحذير من عواصف رعدية نشطة في ${location.name}",
+          titleAr: "مؤشر على نشاط رعدي في ${location.name}",
           severity: AlertSeverity.WARNING,
-          descriptionAr: "نشاط لخلايا رعدية مصحوبة برياح هابطة قوية وهطول غزير للأمطار مع احتمالية تساقط حبات البَرَد.",
+          descriptionAr: "تشير قيمة رمز الطقس المستلمة إلى نشاط رعدي في بيانات النموذج. لا تتضمن هذه القراءة وحدها تأكيداً للهبات الهابطة أو البَرَد.",
           safetyInstructionsAr: "ابتعد عن الأماكن المكشوفة وأعمدة الإنارة، وتجنب النزول للأودية وتجمعات المياه.",
-          source: "المركز الوطني للأرصاد والإنذار المبكر",
-          validUntil: "خلال الـ 6 ساعات القادمة",
+          source: "تحليل آلي لبيانات Open-Meteo - ليس تحذيراً رسمياً",
+          validUntil: "مؤشر آلي؛ تحقق من آخر تحديث رسمي",
         ),
       );
     }
@@ -481,12 +649,12 @@ class WeatherRepository {
       list.add(
         SevereWeatherAlert(
           id: "heatwave_${location.name}",
-          titleAr: "تحذير من موجة حر شديدة وجفاف",
+          titleAr: "مؤشر على حرارة مرتفعة في ${location.name}",
           severity: AlertSeverity.WATCH,
-          descriptionAr: "ارتفاع ملموس على درجات الحرارة يتجاوز المعدلات الموسمية، مع طقس شديد الحرارة وضربات شمس محتملة.",
+          descriptionAr: "تجاوزت الحرارة عتبة التطبيق البالغة 38°م. لا تمثل هذه المقارنة وحدها تحليلاً للمعدلات المناخية أو إعلاناً عن موجة حر رسمية.",
           safetyInstructionsAr: "تجنب التعرض المباشر لأشعة الشمس بين 11 صباحاً و 4 عصراً، واحرص على شرب السوائل بوفرة.",
-          source: "إدارة الطوارئ والأرصاد السورية",
-          validUntil: "مستمرة حتى مساء اليوم",
+          source: "تحليل آلي لبيانات Open-Meteo - ليس تحذيراً رسمياً",
+          validUntil: "مؤشر آلي؛ تحقق من آخر تحديث رسمي",
         ),
       );
     }
@@ -495,83 +663,19 @@ class WeatherRepository {
       list.add(
         SevereWeatherAlert(
           id: "wind_${location.name}",
-          titleAr: "تنبيه رياح نشطة وعواصف ترابية",
+          titleAr: "مؤشر على سرعة رياح مرتفعة في ${location.name}",
           severity: AlertSeverity.ADVISORY,
-          descriptionAr: "رياح شديدة السرعة تتجاوز ${current.windSpeedKmh.toInt()} كم/س مع هبات قوية قد تثير الأتربة والغبار.",
+          descriptionAr: "بلغت سرعة الرياح المقاسة ${current.windSpeedKmh.toInt()} كم/س. لا تتوفر هنا قراءة لهبات الرياح أو تركيز الغبار.",
           safetyInstructionsAr: "تثبيت الأجسام القابلة للتطاير والحذر عند القيادة على الطرق السريعة المفتوحة.",
-          source: "هيئة الأرصاد وحماية البيئة",
-          validUntil: "خلال الساعات المقبلة",
+          source: "تحليل آلي لبيانات Open-Meteo - ليس تحذيراً رسمياً",
+          validUntil: "مؤشر آلي؛ تحقق من آخر تحديث رسمي",
         ),
       );
     }
 
-    // Default advisory for all Syrian users if no extreme conditions
-    if (list.isEmpty) {
-      list.add(
-        SevereWeatherAlert(
-          id: "mcnc_bulletin_${location.name}",
-          titleAr: "نشرة الاستقرار الجوي - المركز الوطني للأرصاد (MCNC)",
-          severity: AlertSeverity.ADVISORY,
-          descriptionAr: "أجواء مستقرة عموماً في أغلب المحافظات السورية مع درجات حرارة حول المعدل السنوي وسماء صافية إلى قليلة الغيوم.",
-          safetyInstructionsAr: "الأجواء مثالية للأنشطة الخارجية والتنقل بين المحافظات.",
-          source: "المركز الوطني للأرصاد الجوية والمناخ (MCNC)",
-          validUntil: "صالحة لـ 24 ساعة",
-        ),
-      );
-    }
-
+    // Do not manufacture an official-looking stability bulletin when no threshold is met.
     return list;
   }
 
-  FullWeatherData _generateFallbackWeatherData(CityLocation location) {
-    final current = CurrentWeather(
-      time: "الآن",
-      temperatureCelsius: 24.5,
-      apparentTemperatureCelsius: 25.0,
-      humidity: 48,
-      isDay: true,
-      precipitationMm: 0.0,
-      weatherCode: 0,
-      pressureHpa: 1014.0,
-      windSpeedKmh: 14.5,
-      windDirectionDegree: 280.0,
-      uvIndex: 5.5,
-      conditionAr: "صافٍ ومشرق",
-      conditionType: WeatherConditionType.CLEAR,
-    );
 
-    final List<HourlyForecast> hourly = List.generate(24, (i) {
-      return HourlyForecast(
-        time: "$i:00",
-        hourLabel: "${(i % 12 == 0 ? 12 : i % 12)} ${i < 12 ? 'ص' : 'م'}",
-        temperatureCelsius: 22.0 + (i > 6 && i < 16 ? (i - 6) * 0.8 : -(i % 4) * 0.5),
-        weatherCode: 0,
-        precipitationProb: (i * 3) % 20,
-        humidity: 45 + (i % 10),
-        windSpeedKmh: 12.0 + (i % 5),
-        conditionType: WeatherConditionType.CLEAR,
-      );
-    });
-
-    final List<DailyForecast> daily = [
-      DailyForecast(date: "2026-11-07", dayLabel: "اليوم", weatherCode: 0, maxTempCelsius: 26.0, minTempCelsius: 16.0, precipitationProb: 5, sunrise: "06:14", sunset: "18:42", uvIndexMax: 6.0, conditionType: WeatherConditionType.CLEAR),
-      DailyForecast(date: "2026-11-08", dayLabel: "غداً", weatherCode: 1, maxTempCelsius: 25.0, minTempCelsius: 15.0, precipitationProb: 10, sunrise: "06:15", sunset: "18:41", uvIndexMax: 5.8, conditionType: WeatherConditionType.PARTLY_CLOUDY),
-      DailyForecast(date: "2026-11-09", dayLabel: "الأحد", weatherCode: 2, maxTempCelsius: 24.0, minTempCelsius: 14.0, precipitationProb: 20, sunrise: "06:16", sunset: "18:40", uvIndexMax: 5.2, conditionType: WeatherConditionType.PARTLY_CLOUDY),
-      DailyForecast(date: "2026-11-10", dayLabel: "الإثنين", weatherCode: 61, maxTempCelsius: 21.0, minTempCelsius: 13.0, precipitationProb: 65, sunrise: "06:17", sunset: "18:39", uvIndexMax: 3.5, conditionType: WeatherConditionType.RAIN),
-      DailyForecast(date: "2026-11-11", dayLabel: "الثلاثاء", weatherCode: 80, maxTempCelsius: 19.0, minTempCelsius: 12.0, precipitationProb: 75, sunrise: "06:18", sunset: "18:38", uvIndexMax: 3.0, conditionType: WeatherConditionType.HEAVY_RAIN),
-      DailyForecast(date: "2026-11-12", dayLabel: "الأربعاء", weatherCode: 2, maxTempCelsius: 22.0, minTempCelsius: 13.0, precipitationProb: 15, sunrise: "06:19", sunset: "18:37", uvIndexMax: 5.0, conditionType: WeatherConditionType.PARTLY_CLOUDY),
-      DailyForecast(date: "2026-11-13", dayLabel: "الخميس", weatherCode: 0, maxTempCelsius: 23.5, minTempCelsius: 14.0, precipitationProb: 10, sunrise: "06:20", sunset: "18:36", uvIndexMax: 5.6, conditionType: WeatherConditionType.CLEAR),
-    ];
-
-    return FullWeatherData(
-      location: location,
-      current: current,
-      hourlyList: hourly,
-      dailyList: daily,
-      airQuality: AirQualityInfo(aqi: 38, statusAr: "جيد ونقي", pm25: 9.5, pm10: 18.0, recommendationAr: "الهواء نقي وصحي في سماء ${location.name}."),
-      pollen: PollenInfo(grassLevelAr: "منخفض", treeLevelAr: "منخفض", weedLevelAr: "منخفض", overallLevelAr: "مستوى طبيعي ومستقر", alertActive: false),
-      alerts: _detectSevereAlerts(location, current, daily, 38),
-      lastUpdated: "الوضع الاحتياطي - بيانات محاكاة المركز",
-    );
-  }
 }

@@ -28,19 +28,19 @@ class _SevereWeatherAlertBannerState extends State<SevereWeatherAlertBanner> {
     switch (alert.severity) {
       case AlertSeverity.EMERGENCY:
         alertColor = AppTheme.alertEmergency;
-        badgeText = "طوارئ قصوى (CAP)";
+        badgeText = "مؤشر آلي مرتفع";
         break;
       case AlertSeverity.WARNING:
         alertColor = AppTheme.alertWarning;
-        badgeText = "تحذير جوي عاجل";
+        badgeText = "تنبيه آلي";
         break;
       case AlertSeverity.WATCH:
         alertColor = AppTheme.alertWatch;
-        badgeText = "مراقبة جوية";
+        badgeText = "مراقبة آلية";
         break;
       case AlertSeverity.ADVISORY:
         alertColor = AppTheme.alertAdvisory;
-        badgeText = "تنويه وإرشاد جوي";
+        badgeText = "معلومة آلية";
         break;
     }
 

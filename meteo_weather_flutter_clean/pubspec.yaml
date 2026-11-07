@@ -1,10 +1,10 @@
 name: flutter_meteo_weather
-description: "تطبيق طقس MCNC الرسمي - المركز الوطني للأرصاد الجوية والمناخ في الجمهورية العربية السورية (نسخة فلاتر المطابقة كلياً لنسخة كوتلن)"
+description: "واجهة طقس عربية باستخدام Flutter وخدمات Open-Meteo"
 publish_to: "none"
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: ">=3.8.0 <4.0.0"
 
 dependencies:
   flutter:

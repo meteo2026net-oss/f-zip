@@ -39,7 +39,13 @@ class HourlyForecastSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          SizedBox(
+          if (hourlyList.isEmpty)
+            const Text(
+              "لا تتوفر توقعات ساعية مكتملة حالياً.",
+              style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+            )
+          else
+            SizedBox(
             height: 120,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
@@ -59,7 +65,7 @@ class HourlyForecastSection extends StatelessWidget {
                     ),
                     AnimatedWeatherIcon(
                       condition: item.conditionType,
-                      isDay: true,
+                      isDay: item.isDay,
                       size: 32,
                     ),
                     Text(
@@ -79,7 +85,7 @@ class HourlyForecastSection extends StatelessWidget {
                         ),
                         const SizedBox(width: 2),
                         Text(
-                          "${item.precipitationProb}%",
+                          item.precipitationProb < 0 ? "—" : "${item.precipitationProb}%",
                           style: const TextStyle(
                             fontSize: 10,
                             color: AppTheme.primary,

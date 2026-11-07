@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/weather_models.dart';
 import '../theme/app_theme.dart';
-import 'animated_weather_icon.dart';
 
 class SyrianStationsSection extends StatelessWidget {
   final List<SyrianWeatherStation> stations;
@@ -23,19 +22,18 @@ class SyrianStationsSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
+              const Row(
                 children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF10B981), // Emerald green pulse
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: AppTheme.textMuted,
                       shape: BoxShape.circle,
                     ),
+                    child: SizedBox(width: 8, height: 8),
                   ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    "شبكة محطات الرصد السورية (MCNC)",
+                  SizedBox(width: 8),
+                  Text(
+                    "مواقع محطات الرصد السورية (بيانات توضيحية)",
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -52,7 +50,7 @@ class SyrianStationsSection extends StatelessWidget {
                   border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3)),
                 ),
                 child: const Text(
-                  "13 محطة حية",
+                  "13 موقعاً توضيحياً",
                   style: TextStyle(
                     fontSize: 11,
                     color: AppTheme.primary,
@@ -114,47 +112,46 @@ class SyrianStationsSection extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF10B981),
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppTheme.textMuted,
                     shape: BoxShape.circle,
                   ),
+                  child: SizedBox(width: 6, height: 6),
                 ),
               ],
             ),
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "${station.temperatureCelsius.toInt()}°",
-                  style: const TextStyle(
+                  "--",
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primary,
                   ),
                 ),
-                AnimatedWeatherIcon(
-                  condition: station.conditionType,
-                  isDay: true,
-                  size: 28,
+                Icon(
+                  Icons.location_on_outlined,
+                  color: AppTheme.textMuted,
+                  size: 26,
                 ),
               ],
             ),
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  station.conditionAr,
-                  style: const TextStyle(
+                  "مصدر البيانات غير مربوط",
+                  style: TextStyle(
                     fontSize: 11,
                     color: AppTheme.textSecondary,
                   ),
                 ),
                 Text(
-                  "${station.humidity}%",
-                  style: const TextStyle(
+                  "--",
+                  style: TextStyle(
                     fontSize: 11,
                     color: AppTheme.textMuted,
                   ),

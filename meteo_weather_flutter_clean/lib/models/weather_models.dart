@@ -46,8 +46,8 @@ class SyrianWeatherStation {
     required this.windSpeedKmh,
     required this.conditionAr,
     required this.conditionType,
-    this.isOnline = true,
-    this.lastReadingTime = "منذ 10 دقائق",
+    this.isOnline = false,
+    this.lastReadingTime = "لا توجد بيانات مباشرة",
   });
 }
 
@@ -175,6 +175,7 @@ class CurrentWeather {
   final double windSpeedKmh;
   final double windDirectionDegree;
   final double uvIndex;
+  final double? visibilityMeters;
   final String conditionAr;
   final WeatherConditionType conditionType;
 
@@ -190,6 +191,7 @@ class CurrentWeather {
     required this.windSpeedKmh,
     required this.windDirectionDegree,
     required this.uvIndex,
+    this.visibilityMeters,
     required this.conditionAr,
     required this.conditionType,
   });
@@ -204,6 +206,7 @@ class HourlyForecast {
   final int humidity;
   final double windSpeedKmh;
   final WeatherConditionType conditionType;
+  final bool isDay;
 
   HourlyForecast({
     required this.time,
@@ -214,6 +217,7 @@ class HourlyForecast {
     required this.humidity,
     required this.windSpeedKmh,
     required this.conditionType,
+    this.isDay = true,
   });
 }
 

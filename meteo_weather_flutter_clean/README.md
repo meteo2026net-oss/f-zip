@@ -1,50 +1,81 @@
-# تطبيق طقس MCNC - نسخة Flutter (MCNC Weather) 🇸🇾🌦️
+# تطبيق طقس MCNC — Flutter
 
-نسخة Flutter المطابقة تماماً لتطبيق الأندرويد الأصيل المبني بـ Kotlin و Jetpack Compose للمركز الوطني للأرصاد الجوية والمناخ في الجمهورية العربية السورية.
+واجهة طقس عربية باتجاه RTL مبنية باستخدام Flutter، وتستخدم خدمات Open-Meteo للتوقعات والبحث الجغرافي وجودة الهواء.
 
-## 📱 متطلبات التشغيل
-- Flutter SDK >= 3.0.0
-- Dart SDK >= 3.0.0
+## المتطلبات
 
-## 🛠️ التثبيت والتشغيل السريع
+- Flutter 3.32 أو أحدث.
+- Dart 3.8 أو أحدث.
+- اتصال إنترنت لجلب البيانات الخارجية.
+
+## تهيئة منصات Android وWeb
+
+المجلدان الموجودان حالياً في المستودع كانا غير مكتملين. لإنشاء ملفات المنصات القياسية وملفات Gradle وWrapper محلياً، شغّل أحد السكربتين من جذر المشروع:
+
 ```bash
-# 1. تثبيت الحزم والمكتبات
-flutter pub get
+bash tool/bootstrap_platforms.sh
+```
 
-# 2. تشغيل التطبيق على الهاتف أو المحاكي أو المتصفح
+في Windows PowerShell:
+
+```powershell
+.\tool\bootstrap_platforms.ps1
+```
+
+بعد التهيئة:
+
+```bash
+flutter pub get
+flutter analyze
+flutter test
 flutter run
 ```
 
-## 🏗️ هيكلية المشروع (Project Architecture)
+## بناء الإصدارات
+
+```bash
+flutter build apk --release
+flutter build web --release
 ```
-flutter_meteo_weather/
-├── lib/
-│   ├── main.dart                      # نقطة البداية وإعدادات اللغة العربية والـ RTL
-│   ├── theme/
-│   │   └── app_theme.dart             # الألوان والتصميم الليلي Glassmorphic M3
-│   ├── models/
-│   │   └── weather_models.dart        # نماذج البيانات (محطات، تنبيهات، توقعات)
-│   ├── services/
-│   │   ├── open_meteo_service.dart    # الاتصال بـ API الأرصاد Open-Meteo
-│   │   ├── weather_repository.dart    # مستودع البيانات والمحطات السورية
-│   │   └── gemini_assistant_service.dart # مساعد الطقس الذكي
-│   ├── widgets/
-│   │   ├── weather_background.dart    # خلفية الطقس المتحركة
-│   │   ├── animated_weather_icon.dart # أيقونات الطقس التفاعلية
-│   │   ├── syrian_stations_section.dart # شبكة المحطات السورية الـ 13
-│   │   ├── severe_weather_alert_banner.dart # تنبيهات الطوارئ CAP
-│   │   ├── audio_bulletin_section.dart # النشرة الجوية الصوتية (TTS)
-│   │   ├── hourly_forecast_section.dart # التوقعات الساعية 24 ساعة
-│   │   ├── daily_forecast_section.dart # التوقعات اليومية 7 أيام
-│   │   ├── weather_metrics_grid.dart  # مؤشرات الرطوبة والرياح والـ UV
-│   │   ├── city_search_sheet.dart     # نافذة البحث عن المدن السورية
-│   │   ├── customize_metrics_sheet.dart # تخصيص بطاقات المؤشرات
-│   │   ├── gemini_chat_sheet.dart     # محادثة مساعد الطقس الذكي
-│   │   ├── admin_dashboard_sheet.dart # لوحة تحكم وإصدار التنبيهات
-│   │   └── interactive_weather_map.dart # خريطة الرادار والمحطات
-│   └── screens/
-│       └── home_weather_screen.dart   # الشاشة الرئيسية المنسقة
-├── assets/
-│   └── app_weather_icon.jpg           # أيقونة التطبيق الرسمية
-└── pubspec.yaml                       # إعدادات الحزم والاعتماديات
+
+## حدود البيانات الحالية
+
+- التوقعات الجوية تصل إلى 16 يوماً من Open-Meteo. بيانات جودة الهواء مستمدة من نماذج CAMS عبر Open-Meteo وليست قياسات محطات أرضية.
+- متغيرات حبوب اللقاح لدى Open-Meteo متاحة لأوروبا فقط وفي موسم اللقاح؛ لذلك قد لا تتوفر لسوريا وتظهر حينها «غير متاح».
+- بيانات مواقع محطات الرصد الـ13 في الواجهة توضيحية وليست اتصالاً بمحطات MCNC الفعلية.
+- لا توجد حالياً طبقة رادار حية أو بث تنبيهات إلى أجهزة المستخدمين.
+- تُعرض الرؤية الأفقية من أقرب توقيت ساعي مطابق عندما يقدّمها المصدر، وتبقى غير متاحة عند غيابها.
+- عند غياب بيانات جودة الهواء، يعرض التطبيق أنها غير متاحة بدلاً من اختلاق قياسات.
+- مساعد الطقس الحالي قائم على قواعد محلية وليس تكاملاً مع Gemini.
+
+## هيكل المشروع
+
 ```
+lib/
+  main.dart
+  models/
+  screens/
+  services/
+  theme/
+  widgets/
+assets/
+test/
+web/
+android/
+tool/
+```
+
+## حزم البناء من GitHub Actions
+
+عند نجاح فحوصات Pull Request، ينشر GitHub Actions حزمة باسم `mcnc-weather-build-<run_number>` لمدة 14 يوماً، وتحتوي على APK ونسخة Web ومجلدي Android وWeb اللذين ولّدهما سكربت التهيئة. افتح تشغيل CI في تبويب Actions ثم قسم Artifacts للحصول على الحزمة.
+
+## إسناد البيانات
+
+بيانات جودة الهواء: Open-Meteo / Copernicus Atmosphere Monitoring Service (CAMS). يجب إبقاء إسناد المصدر واضحاً عند نشر التطبيق أو إعادة توزيع البيانات.
+
+## ملاحظات
+
+لا تضع ملفات `local.properties` أو مفاتيح API أو بيانات اعتماد داخل Git. ملفات المنصات التي يولدها Flutter تختلف حسب إصدار SDK والبيئة؛ أعد تشغيل سكربت التهيئة عند الحاجة ثم راجع الفروقات قبل اعتمادها.
+## الملخص التاريخي الشهري
+
+تستخدم صفحة «ملخص الشهر الماضي» نقطة نهاية Open-Meteo Historical Weather Archive لجلب آخر 30 يوماً مكتملة (مع تأخير تشغيلي قدره خمسة أيام لتفادي عرض يوم غير مكتمل). تعرض الحرارة العظمى والصغرى والهطول والرياح اليومية. هذه القيم ناتجة عن إعادة تحليل بيانات الطقس وليست قياسات مباشرة من محطات MCNC، ولا تمثل توقعات مستقبلية للشهر.

@@ -61,11 +61,11 @@ class _AdminDashboardSheetState extends State<AdminDashboardSheet> with SingleTi
       severity: _selectedSeverity,
       descriptionAr: _alertDescController.text.trim().isNotEmpty
           ? _alertDescController.text.trim()
-          : "تحذير جوي رسمي صادر عن المركز الوطني للأرصاد الجوية والمناخ.",
+          : "تنبيه تجريبي أُنشئ محلياً ولم يتم اعتماده أو إرساله رسمياً.",
       safetyInstructionsAr: _alertInstructionController.text.trim().isNotEmpty
           ? _alertInstructionController.text.trim()
           : "الالتزام بتوجيهات الدفاع المدني والابتعاد عن مجاري السيول والأماكن المكشوفة.",
-      source: "غرفة عمليات الإنذار المبكر (CAP - MCNC)",
+      source: "إنشاء محلي - غير مرسل عبر CAP",
       validUntil: "ساري المفعول لمدة 12 ساعة",
     );
 
@@ -73,7 +73,7 @@ class _AdminDashboardSheetState extends State<AdminDashboardSheet> with SingleTi
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text("تم بث التحذير الجوي (CAP) لكافة المستخدمين بنجاح!"),
+        content: Text("أُضيف التنبيه إلى جلسة التطبيق الحالية فقط؛ لم يتم بثه إلى المستخدمين."),
         backgroundColor: Color(0xFF10B981),
       ),
     );
@@ -89,7 +89,7 @@ class _AdminDashboardSheetState extends State<AdminDashboardSheet> with SingleTi
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("تم تحديث النشرة الجوية الصوتية بنجاح!"),
+          content: Text("تم حفظ نص النشرة محلياً على هذا الجهاز."),
           backgroundColor: Color(0xFF10B981),
         ),
       );
@@ -129,7 +129,7 @@ class _AdminDashboardSheetState extends State<AdminDashboardSheet> with SingleTi
                         Icon(Icons.admin_panel_settings, color: AppTheme.secondary, size: 24),
                         SizedBox(width: 8),
                         Text(
-                          "لوحة تحكم الأرصاد السورية (MCNC)",
+                          "أدوات تجريبية محلية للطقس",
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -151,7 +151,7 @@ class _AdminDashboardSheetState extends State<AdminDashboardSheet> with SingleTi
                   labelColor: AppTheme.primary,
                   unselectedLabelColor: AppTheme.textMuted,
                   tabs: const [
-                    Tab(text: "إصدار تنبيه CAP"),
+                    Tab(text: "تنبيه تجريبي محلي"),
                     Tab(text: "تسجيل النشرة الصوتية"),
                   ],
                 ),
@@ -237,7 +237,7 @@ class _AdminDashboardSheetState extends State<AdminDashboardSheet> with SingleTi
                         child: ElevatedButton.icon(
                           onPressed: _publishAlert,
                           icon: const Icon(Icons.broadcast_on_home),
-                          label: const Text("بث التنبيه الفوري لجميع الأجهزة"),
+                          label: const Text("إضافة التنبيه محلياً (دون بث)"),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.alertEmergency,
                             foregroundColor: Colors.white,
@@ -285,7 +285,7 @@ class _AdminDashboardSheetState extends State<AdminDashboardSheet> with SingleTi
                         child: ElevatedButton.icon(
                           onPressed: _saveBulletin,
                           icon: const Icon(Icons.record_voice_over),
-                          label: const Text("نشر وتحديث النشرة الصوتية"),
+                          label: const Text("حفظ نص النشرة على هذا الجهاز"),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primary,
                             foregroundColor: const Color(0xFF0F172A),

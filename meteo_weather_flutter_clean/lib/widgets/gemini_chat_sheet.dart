@@ -28,7 +28,7 @@ class _GeminiChatSheetState extends State<GeminiChatSheet> {
       ChatMessageItem(
         id: "msg_init",
         sender: "gemini",
-        text: "أهلاً بك! أنا مساعد طقس MCNC الذكي. كيف أساعدك اليوم بخصوص الأحوال الجوية في ${widget.weatherData.location.name} أو إرشادات السفر والزراعة؟",
+        text: "أهلاً بك! أنا مساعد الطقس المحلي في MCNC. كيف أساعدك اليوم بخصوص الأحوال الجوية في ${widget.weatherData.location.name} أو إرشادات السفر والزراعة؟",
         timestamp: "الآن",
       ),
     );
@@ -136,7 +136,7 @@ class _GeminiChatSheetState extends State<GeminiChatSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              "مساعد طقس MCNC الذكي",
+                              "مساعد الطقس المحلي في MCNC",
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,

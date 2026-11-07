@@ -15,6 +15,10 @@ import '../widgets/severe_weather_alert_banner.dart';
 import '../widgets/syrian_stations_section.dart';
 import '../widgets/weather_background.dart';
 import '../widgets/weather_metrics_grid.dart';
+import 'hourly_forecast_screen.dart';
+import 'weather_trends_screen.dart';
+import 'monthly_weather_screen.dart';
+import 'weather_details_screen.dart';
 
 class HomeWeatherScreen extends StatefulWidget {
   const HomeWeatherScreen({super.key});
@@ -32,6 +36,8 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
   late AudioBulletinItem _bulletin;
   late List<MetricPreference> _metrics;
   bool _isLoading = true;
+  String? _loadError;
+  int _weatherRequestId = 0;
 
   @override
   void initState() {
@@ -39,18 +45,48 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
     _stations = _repository.getSyrianWeatherStations();
     _bulletin = _repository.getAudioBulletin();
     _metrics = _repository.getMetricPreferences();
-    _loadWeatherData();
+    _initializeApp();
+  }
+
+  @override
+  void dispose() {
+    // Invalidate any pending weather request before releasing its HTTP client.
+    _weatherRequestId++;
+    _repository.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initializeApp() async {
+    try {
+      await _repository.initializePreferences();
+    } catch (_) {
+      // The app can still run with in-memory defaults if local storage is unavailable.
+    }
+    if (!mounted) return;
+    setState(() {
+      _bulletin = _repository.getAudioBulletin();
+      _metrics = _repository.getMetricPreferences();
+    });
+    await _loadWeatherData();
   }
 
   Future<void> _loadWeatherData() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    final data = await _repository.getFullWeather(_selectedCity);
-    if (mounted) {
+    final requestId = ++_weatherRequestId;
+    setState(() { _isLoading = true; });
+    final requestedCity = _selectedCity;
+    try {
+      final data = await _repository.getFullWeather(requestedCity);
+      if (!mounted || requestId != _weatherRequestId) return;
       setState(() {
         _weatherData = data;
+        _loadError = null;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted || requestId != _weatherRequestId) return;
+      setState(() {
+        _weatherData = null;
+        _loadError = "تعذر تحميل بيانات الطقس حالياً. تحقق من الاتصال ثم أعد المحاولة.";
         _isLoading = false;
       });
     }
@@ -59,6 +95,8 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
   void _onCitySelected(CityLocation city) {
     setState(() {
       _selectedCity = city;
+      _weatherData = null;
+      _loadError = null;
     });
     _loadWeatherData();
   }
@@ -91,10 +129,11 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => CustomizeMetricsSheet(
         metrics: _metrics,
-        onSave: (updated) {
+        onSave: (updated) async {
           setState(() {
             _metrics = updated;
           });
+          await _repository.saveMetricPreferences(updated);
         },
       ),
     );
@@ -194,8 +233,44 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                   const SizedBox(width: 6),
                   IconButton(
                     icon: const Icon(Icons.admin_panel_settings_outlined, color: AppTheme.secondary),
-                    tooltip: "لوحة تحكم الأرصاد (MCNC)",
+                    tooltip: "أدوات تجريبية محلية",
                     onPressed: _openAdminDashboard,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.schedule_outlined, color: AppTheme.secondary),
+                    tooltip: "التوقعات الساعية",
+                    onPressed: _weatherData == null ? null : () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => HourlyForecastScreen(weather: _weatherData!),
+                      ));
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.calendar_month_outlined, color: AppTheme.secondary),
+                    tooltip: "ملخص الشهر الماضي",
+                    onPressed: () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => MonthlyWeatherScreen(location: _selectedCity),
+                      ));
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.insights_outlined, color: AppTheme.tertiary),
+                    tooltip: "اتجاهات التوقعات",
+                    onPressed: _weatherData == null ? null : () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => WeatherTrendsScreen(weather: _weatherData!),
+                      ));
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.analytics_outlined, color: AppTheme.primary),
+                    tooltip: "تفاصيل الطقس",
+                    onPressed: _weatherData == null ? null : () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => WeatherDetailsScreen(weather: _weatherData!),
+                      ));
+                    },
                   ),
                   IconButton(
                     icon: const Icon(Icons.refresh, color: AppTheme.textSecondary),
@@ -209,7 +284,31 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                 ? const Center(
                     child: CircularProgressIndicator(color: AppTheme.primary),
                   )
-                : RefreshIndicator(
+                : _weatherData == null
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.cloud_off, color: AppTheme.textMuted, size: 42),
+                              const SizedBox(height: 12),
+                              Text(
+                                _loadError ?? "لا توجد بيانات طقس متاحة.",
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: AppTheme.textSecondary),
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                onPressed: _loadWeatherData,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text("إعادة المحاولة"),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : RefreshIndicator(
                     onRefresh: _loadWeatherData,
                     color: AppTheme.primary,
                     child: SingleChildScrollView(
@@ -221,13 +320,13 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                           // Hero Current Weather Card
                           _buildHeroWeatherCard(),
 
-                          // Syrian Official Stations Carousel (13 stations)
+                          // Placeholder station locations (no live station feed connected)
                           SyrianStationsSection(
                             stations: _stations,
                             onStationSelected: _onStationSelected,
                           ),
 
-                          // CAP Severe Weather Warnings Banner
+                          // Automated weather indicators (not official alerts)
                           if (_weatherData != null && _weatherData!.alerts.isNotEmpty)
                             SevereWeatherAlertBanner(alerts: _weatherData!.alerts),
 
@@ -238,7 +337,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                           if (_weatherData != null)
                             HourlyForecastSection(hourlyList: _weatherData!.hourlyList),
 
-                          // Daily 7-day Forecast
+                          // Daily 16-day Forecast
                           if (_weatherData != null)
                             DailyForecastSection(dailyList: _weatherData!.dailyList),
 
@@ -246,10 +345,11 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                           if (_weatherData != null)
                             WeatherMetricsGrid(
                               weatherData: _weatherData!,
+                              metrics: _metrics,
                               onCustomizeClicked: _openCustomizeMetrics,
                             ),
 
-                          // Interactive Syrian Radar & Weather Map
+                          // Schematic station-location map (no live radar layer)
                           InteractiveWeatherMap(
                             stations: _stations,
                             onStationSelected: _onStationSelected,
@@ -267,7 +367,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 const Text(
-                                  "MCNC Weather • الإصدار 1.0 (Flutter & Kotlin)",
+                                  "MCNC Weather • إصدار Flutter",
                                   style: TextStyle(fontSize: 10, color: AppTheme.textMuted),
                                 ),
                               ],
@@ -287,7 +387,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
         foregroundColor: const Color(0xFF0F172A),
         icon: const Icon(Icons.auto_awesome),
         label: const Text(
-          "اسأل خبير الطقس الذكي",
+          "اسأل مساعد الطقس المحلي",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
@@ -406,7 +506,9 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
               ),
               _buildHeroSubMetric(
                 label: "فرصة الأمطار",
-                value: todayDaily != null ? "${todayDaily.precipitationProb}%" : "0%",
+                value: todayDaily == null || todayDaily.precipitationProb < 0
+                    ? "—"
+                    : "${todayDaily.precipitationProb}%",
               ),
               _buildHeroSubMetric(
                 label: "سرعة الرياح",

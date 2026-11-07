@@ -29,7 +29,7 @@ class DailyForecastSection extends StatelessWidget {
               Icon(Icons.calendar_month, size: 18, color: AppTheme.secondary),
               SizedBox(width: 8),
               Text(
-                "توقعات الـ 7 أيام القادمة",
+                "توقعات 16 يوماً (تشمل اليوم)",
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -39,7 +39,13 @@ class DailyForecastSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          ListView.separated(
+          if (dailyList.isEmpty)
+            const Text(
+              "لا تتوفر توقعات يومية مكتملة حالياً.",
+              style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+            )
+          else
+            ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: dailyList.length,
@@ -65,7 +71,12 @@ class DailyForecastSection extends StatelessWidget {
                     size: 26,
                   ),
                   const SizedBox(width: 8),
-                  if (day.precipitationProb > 10)
+                  if (day.precipitationProb < 0)
+                    const Text(
+                      "—",
+                      style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                    )
+                  else if (day.precipitationProb > 10)
                     Text(
                       "${day.precipitationProb}%",
                       style: const TextStyle(
