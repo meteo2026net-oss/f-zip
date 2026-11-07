@@ -376,13 +376,21 @@ class WeatherRepository {
 
     double requiredDouble(String key) {
       final value = currentObj[key];
-      if (value is! num) {
+      if (value is! num || !value.isFinite) {
         throw FormatException("Missing or invalid current.$key in forecast response.");
       }
       return value.toDouble();
     }
 
-    int requiredInt(String key) => requiredDouble(key).toInt();
+    int requiredInt(String key) {
+      final value = currentObj[key];
+      if (value is! num ||
+          !value.isFinite ||
+          value != value.roundToDouble()) {
+        throw FormatException("Missing or invalid integer current.$key in forecast response.");
+      }
+      return value.toInt();
+    }
 
     final temp = requiredDouble('temperature_2m');
     final apparentTemp = requiredDouble('apparent_temperature');
@@ -394,6 +402,19 @@ class WeatherRepository {
     final windSpeed = requiredDouble('wind_speed_10m');
     final windDir = requiredDouble('wind_direction_10m');
     final uv = requiredDouble('uv_index');
+
+    if (humidity < 0 || humidity > 100) {
+      throw const FormatException("current.relative_humidity_2m must be between 0 and 100.");
+    }
+    if (isDay != 0 && isDay != 1) {
+      throw const FormatException("current.is_day must be either 0 or 1.");
+    }
+    if (precipMm < 0 || windSpeed < 0 || uv < 0) {
+      throw const FormatException("Current precipitation, wind speed and UV values cannot be negative.");
+    }
+    if (windDir < 0 || windDir > 360) {
+      throw const FormatException("current.wind_direction_10m must be between 0 and 360.");
+    }
 
     final conditionType = mapWeatherCode(weatherCode);
     final conditionAr = getWeatherConditionText(weatherCode, isDay);
