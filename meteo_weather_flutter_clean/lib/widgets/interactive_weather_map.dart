@@ -102,14 +102,14 @@ class InteractiveWeatherMap extends StatelessWidget {
                     const Positioned(
                       left: 8,
                       bottom: 7,
-                      child: const _CoordinateLabel(
+                      child: _CoordinateLabel(
                         text: '35°–42° شرقاً',
                       ),
                     ),
                     const Positioned(
                       right: 8,
                       top: 7,
-                      child: const _CoordinateLabel(
+                      child: _CoordinateLabel(
                         text: '32°–38° شمالاً',
                       ),
                     ),
