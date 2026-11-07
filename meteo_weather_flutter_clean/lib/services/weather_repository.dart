@@ -587,7 +587,7 @@ class WeatherRepository {
       list.add(
         SevereWeatherAlert(
           id: "thunderstorm_${location.name}",
-          titleAr: "تحذير من عواصف رعدية نشطة في ${location.name}",
+          titleAr: "مؤشر على نشاط رعدي في ${location.name}",
           severity: AlertSeverity.WARNING,
           descriptionAr: "تشير قيمة رمز الطقس المستلمة إلى نشاط رعدي في بيانات النموذج. لا تتضمن هذه القراءة وحدها تأكيداً للهبات الهابطة أو البَرَد.",
           safetyInstructionsAr: "ابتعد عن الأماكن المكشوفة وأعمدة الإنارة، وتجنب النزول للأودية وتجمعات المياه.",
@@ -601,7 +601,7 @@ class WeatherRepository {
       list.add(
         SevereWeatherAlert(
           id: "heatwave_${location.name}",
-          titleAr: "تحذير من موجة حر شديدة وجفاف",
+          titleAr: "مؤشر على حرارة مرتفعة في ${location.name}",
           severity: AlertSeverity.WATCH,
           descriptionAr: "تجاوزت الحرارة عتبة التطبيق البالغة 38°م. لا تمثل هذه المقارنة وحدها تحليلاً للمعدلات المناخية أو إعلاناً عن موجة حر رسمية.",
           safetyInstructionsAr: "تجنب التعرض المباشر لأشعة الشمس بين 11 صباحاً و 4 عصراً، واحرص على شرب السوائل بوفرة.",
@@ -615,7 +615,7 @@ class WeatherRepository {
       list.add(
         SevereWeatherAlert(
           id: "wind_${location.name}",
-          titleAr: "تنبيه رياح نشطة وعواصف ترابية",
+          titleAr: "مؤشر على سرعة رياح مرتفعة في ${location.name}",
           severity: AlertSeverity.ADVISORY,
           descriptionAr: "بلغت سرعة الرياح المقاسة ${current.windSpeedKmh.toInt()} كم/س. لا تتوفر هنا قراءة لهبات الرياح أو تركيز الغبار.",
           safetyInstructionsAr: "تثبيت الأجسام القابلة للتطاير والحذر عند القيادة على الطرق السريعة المفتوحة.",
