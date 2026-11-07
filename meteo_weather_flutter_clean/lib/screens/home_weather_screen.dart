@@ -45,7 +45,11 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
   }
 
   Future<void> _initializeApp() async {
-    await _repository.initializePreferences();
+    try {
+      await _repository.initializePreferences();
+    } catch (_) {
+      // The app can still run with in-memory defaults if local storage is unavailable.
+    }
     if (!mounted) return;
     setState(() {
       _bulletin = _repository.getAudioBulletin();
