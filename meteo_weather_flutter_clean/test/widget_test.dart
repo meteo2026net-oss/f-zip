@@ -235,6 +235,61 @@ void main() {
       );
     });
   });
+
+  group('Historical monthly archive', () {
+    test('requests the latest completed 30-day window and parses values', () async {
+      late Uri requestedUri;
+      final client = MockClient((request) async {
+        requestedUri = request.url;
+        return http.Response(
+          jsonEncode({
+            'daily': {
+              'time': ['2026-11-02', '2026-11-03'],
+              'temperature_2m_max': [25.5, 26.0],
+              'temperature_2m_min': [14.0, 13.5],
+              'precipitation_sum': [0.0, 2.4],
+              'wind_speed_10m_max': [18.0, 22.0],
+            },
+          }),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      final service = OpenMeteoService(client: client);
+
+      final rows = await service.fetchHistoricalMonth(
+        latitude: 33.5138,
+        longitude: 36.2765,
+        referenceDate: DateTime(2026, 11, 8),
+      );
+
+      expect(requestedUri.host, 'archive-api.open-meteo.com');
+      expect(requestedUri.queryParameters['start_date'], '2026-10-05');
+      expect(requestedUri.queryParameters['end_date'], '2026-11-03');
+      expect(requestedUri.queryParameters['daily'],
+          contains('precipitation_sum'));
+      expect(rows, hasLength(2));
+      expect(rows.last['maxTemp'], 26.0);
+      expect(rows.last['precipitation'], 2.4);
+      service.dispose();
+    });
+
+    test('returns an empty list for an unavailable archive response', () async {
+      final client = MockClient((request) async => http.Response('unavailable', 503));
+      final service = OpenMeteoService(client: client);
+
+      expect(
+        await service.fetchHistoricalMonth(
+          latitude: 33.5138,
+          longitude: 36.2765,
+          referenceDate: DateTime(2026, 11, 8),
+        ),
+        isEmpty,
+      );
+      service.dispose();
+    });
+  });
+
   group('Interactive weather map robustness', () {
     testWidgets('renders safely when the station list is empty', (tester) async {
       await tester.pumpWidget(
