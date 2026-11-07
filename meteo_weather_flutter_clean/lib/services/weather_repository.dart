@@ -498,7 +498,9 @@ class WeatherRepository {
           ? "اليوم"
           : (i == 1
               ? "غداً"
-              : (dateValue == null ? "اليوم ${i + 1}" : arabicWeekdays[dateValue.weekday - 1]));
+              : (dateValue == null
+                  ? "اليوم ${i + 1}"
+                  : "${arabicWeekdays[dateValue.weekday - 1]} ${dateValue.day}/${dateValue.month}"));
       final probabilityValue = i < dailyProbs.length ? dailyProbs[i] : null;
       final sunriseValue = i < dailySunrises.length ? dailySunrises[i] : null;
       final sunsetValue = i < dailySunsets.length ? dailySunsets[i] : null;

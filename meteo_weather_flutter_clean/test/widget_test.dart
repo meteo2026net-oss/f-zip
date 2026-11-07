@@ -26,6 +26,10 @@ Map<String, dynamic> forecastFixture() {
     24,
     (index) => "2026-01-01T${index.toString().padLeft(2, '0')}:00",
   );
+  final dailyDates = List<String>.generate(
+    16,
+    (index) => DateTime(2026, 1, 1).add(Duration(days: index)).toIso8601String().substring(0, 10),
+  );
   return {
     "current": {
       "time": "2026-01-01T12:00",
@@ -50,14 +54,14 @@ Map<String, dynamic> forecastFixture() {
       "visibility": List<num>.filled(24, 10000),
     },
     "daily": {
-      "time": ["2026-01-01"],
-      "weather_code": [3],
-      "temperature_2m_max": [24.0],
-      "temperature_2m_min": [15.0],
-      "precipitation_probability_max": [10],
-      "sunrise": ["2026-01-01T06:30"],
-      "sunset": ["2026-01-01T17:00"],
-      "uv_index_max": [4.0],
+      "time": dailyDates,
+      "weather_code": List<int>.filled(16, 3),
+      "temperature_2m_max": List<double>.filled(16, 24.0),
+      "temperature_2m_min": List<double>.filled(16, 15.0),
+      "precipitation_probability_max": List<int>.filled(16, 10),
+      "sunrise": List<String>.generate(16, (i) => "${dailyDates[i]}T06:30"),
+      "sunset": List<String>.generate(16, (i) => "${dailyDates[i]}T17:00"),
+      "uv_index_max": List<double>.filled(16, 4.0),
     },
   };
 }
@@ -82,6 +86,8 @@ void main() {
       expect(weather.hourlyList.first.time, "2026-01-01T12:00");
       expect(weather.hourlyList.any((hour) => hour.time == "2026-01-01T00:00"), isFalse);
       expect(weather.current.visibilityMeters, 10000.0);
+      expect(weather.dailyList, hasLength(16));
+      expect(weather.dailyList[2].dayLabel, contains("/"));
     });
 
     test('Does not fabricate air quality when the service has no data', () async {
