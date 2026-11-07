@@ -168,6 +168,30 @@ void main() {
       client.close();
     });
   });
+  group('Open-Meteo service failure handling', () {
+    test('returns unavailable forecast data for an HTTP error', () async {
+      final client = MockClient((request) async => http.Response('service unavailable', 503));
+      final service = OpenMeteoService(client: client);
+
+      expect(
+        await service.fetchForecast(latitude: 33.5138, longitude: 36.2765),
+        isNull,
+      );
+      service.dispose();
+    });
+
+    test('returns unavailable air-quality data for malformed JSON', () async {
+      final client = MockClient((request) async => http.Response('{invalid', 200));
+      final service = OpenMeteoService(client: client);
+
+      expect(
+        await service.fetchAirQuality(latitude: 33.5138, longitude: 36.2765),
+        isNull,
+      );
+      service.dispose();
+    });
+  });
+
   group('MCNC Weather data integrity', () {
     test('Maps WMO snow, freezing rain and unknown codes conservatively', () {
       expect(WeatherRepository.mapWeatherCode(85), WeatherConditionType.SNOW);
