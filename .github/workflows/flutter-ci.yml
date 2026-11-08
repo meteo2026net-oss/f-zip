@@ -2,6 +2,11 @@ name: Flutter CI
 
 on:
   workflow_dispatch:
+  push:
+    branches: [fix/flutter-foundation-and-data-integrity]
+    paths:
+      - "meteo_weather_flutter_clean/**"
+      - ".github/workflows/flutter-ci.yml"
   pull_request:
     branches: [main]
     paths:
