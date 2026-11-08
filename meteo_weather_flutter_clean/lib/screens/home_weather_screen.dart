@@ -82,11 +82,11 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
         _loadError = null;
         _isLoading = false;
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted || requestId != _weatherRequestId) return;
       setState(() {
         _weatherData = null;
-        _loadError = "تعذر تحميل بيانات الطقس حالياً. تحقق من الاتصال ثم أعد المحاولة.";
+        _loadError = error.toString();
         _isLoading = false;
       });
     }
