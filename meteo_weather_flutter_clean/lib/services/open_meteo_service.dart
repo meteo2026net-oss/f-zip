@@ -42,10 +42,18 @@ class OpenMeteoService {
           if (decoded is Map<String, dynamic>) return decoded;
           _lastForecastError = 'Invalid JSON response';
         } else {
-          _lastForecastError = 'HTTP ${response.statusCode}';
+          final bodyPreview = response.body
+              .replaceAll(RegExp(r'\\s+'), ' ')
+              .trim();
+          final detail = bodyPreview.length > 240
+              ? '${bodyPreview.substring(0, 240)}…'
+              : bodyPreview;
+          _lastForecastError = detail.isEmpty
+              ? 'HTTP ${response.statusCode}'
+              : 'HTTP ${response.statusCode}: $detail';
         }
       } catch (error) {
-        _lastForecastError = error.runtimeType.toString();
+        _lastForecastError = '${error.runtimeType}: $error';
       }
       if (attempt == 0) {
         await Future<void>.delayed(const Duration(milliseconds: 700));
