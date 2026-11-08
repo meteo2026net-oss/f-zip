@@ -1,11 +1,11 @@
 {
-  "name": "طقس MCNC",
-  "short_name": "MCNC Weather",
+  "name": "طقس المركز الوطني للأرصاد الجوية السورية",
+  "short_name": "طقس سورية",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#0F172A",
   "theme_color": "#0F172A",
-  "description": "توقعات الطقس والبيانات الجوية",
+  "description": "التوقعات والخرائط الجوية للمركز الوطني للأرصاد الجوية السورية",
   "orientation": "portrait",
   "lang": "ar",
   "dir": "rtl"
