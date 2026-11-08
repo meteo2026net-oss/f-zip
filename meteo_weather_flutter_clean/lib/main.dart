@@ -14,7 +14,7 @@ class MeteoWeatherApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'طقس MCNC',
+      title: 'طقس المركز الوطني للأرصاد الجوية السورية',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
       locale: const Locale('ar', 'SY'),
