@@ -19,6 +19,7 @@ import 'hourly_forecast_screen.dart';
 import 'weather_trends_screen.dart';
 import 'monthly_weather_screen.dart';
 import 'weather_details_screen.dart';
+import 'weather_maps_screen.dart';
 
 class HomeWeatherScreen extends StatefulWidget {
   const HomeWeatherScreen({super.key});
@@ -139,6 +140,31 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
     );
   }
 
+  void _openWeatherMaps() {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => WeatherMapsScreen(
+        latitude: _selectedCity.latitude,
+        longitude: _selectedCity.longitude,
+        cityName: _selectedCity.name,
+      ),
+    ));
+  }
+
+  void _showAboutApp() {
+    showAboutDialog(
+      context: context,
+      applicationName: 'طقس المركز الوطني للأرصاد الجوية السورية',
+      applicationVersion: 'إصدار تجريبي',
+      applicationIcon: const Icon(Icons.cloud, color: AppTheme.primary, size: 36),
+      children: const [
+        Text('الاختصار: SCM Weather'),
+        SizedBox(height: 8),
+        Text('المبرمج: إبراهيم زينب'),
+        SizedBox(height: 8),
+        Text('تطبيق لعرض التوقعات والخرائط الجوية. البيانات من مصادرها الخارجية وليست بديلاً عن النشرات الرسمية.'),
+      ],
+    );
+  }
   void _openGeminiChat() {
     if (_weatherData == null) return;
     showModalBottomSheet(
@@ -196,7 +222,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                     ),
                     const SizedBox(width: 8),
                     const Text(
-                      "طقس MCNC",
+                      "طقس سورية",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -206,6 +232,16 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                   ],
                 ),
                 actions: [
+                  IconButton(
+                    icon: const Icon(Icons.layers_outlined, color: AppTheme.primary),
+                    tooltip: 'الخرائط الجوية',
+                    onPressed: _openWeatherMaps,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.info_outline, color: AppTheme.textSecondary),
+                    tooltip: 'حول التطبيق',
+                    onPressed: _showAboutApp,
+                  ),
                   // City selector button
                   InkWell(
                     onTap: _openCitySearch,
@@ -367,7 +403,7 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 const Text(
-                                  "MCNC Weather • إصدار Flutter",
+                                  "SCM Weather • المركز الوطني للأرصاد الجوية السورية • المبرمج: إبراهيم زينب",
                                   style: TextStyle(fontSize: 10, color: AppTheme.textMuted),
                                 ),
                               ],
