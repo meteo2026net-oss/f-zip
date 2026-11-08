@@ -1,0 +1,3 @@
+[submodule "integrations/metra-fieldclimate-collector"]
+	path = integrations/metra-fieldclimate-collector
+	url = https://github.com/gfa437926-tech/metra-fieldclimate-collector.git
