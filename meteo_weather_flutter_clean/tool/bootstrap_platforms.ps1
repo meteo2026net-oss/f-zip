@@ -30,7 +30,7 @@ try {
     if ($MainManifestContent -notmatch 'android.permission.INTERNET') {
         $MainManifestContent = [regex]::Replace(
             $MainManifestContent,
-            '(<manifest\\b[^>]*>)',
+            '(<manifest\b[^>]*>)',
             '$1' + [Environment]::NewLine + '    <uses-permission android:name="android.permission.INTERNET"/>',
             1
         )
