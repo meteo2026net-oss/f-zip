@@ -20,6 +20,7 @@ import 'weather_trends_screen.dart';
 import 'monthly_weather_screen.dart';
 import 'weather_details_screen.dart';
 import 'weather_maps_screen.dart';
+import 'fieldclimate_screen.dart';
 
 class HomeWeatherScreen extends StatefulWidget {
   const HomeWeatherScreen({super.key});
@@ -140,6 +141,20 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
     );
   }
 
+  void _openFieldClimate() {
+    const url = String.fromEnvironment('SUPABASE_URL');
+    const anon = String.fromEnvironment('SUPABASE_ANON_KEY');
+    if (url.isEmpty || anon.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يلزم إعداد SUPABASE_URL و SUPABASE_ANON_KEY عند البناء لتفعيل محطات FieldClimate.')),
+      );
+      return;
+    }
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (_) => const FieldClimateScreen(supabaseUrl: url, anonKey: anon),
+    ));
+  }
+
   void _openWeatherMaps() {
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => WeatherMapsScreen(
@@ -232,6 +247,11 @@ class _HomeWeatherScreenState extends State<HomeWeatherScreen> {
                   ],
                 ),
                 actions: [
+                  IconButton(
+                    icon: const Icon(Icons.sensors_outlined, color: AppTheme.secondary),
+                    tooltip: 'محطات FieldClimate',
+                    onPressed: _openFieldClimate,
+                  ),
                   IconButton(
                     icon: const Icon(Icons.layers_outlined, color: AppTheme.primary),
                     tooltip: 'الخرائط الجوية',
