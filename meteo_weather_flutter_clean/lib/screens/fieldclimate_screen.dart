@@ -91,7 +91,7 @@ class _FieldClimateScreenState extends State<FieldClimateScreen> {
         : stations.isEmpty ? const Center(child: Text('لا توجد محطات محفوظة حتى الآن'))
         : ListView(padding: const EdgeInsets.all(16), children: [
           DropdownButtonFormField<String>(
-            value: stationId, isExpanded: true,
+            initialValue: stationId, isExpanded: true,
             decoration: const InputDecoration(labelText: 'اختر المحطة', border: OutlineInputBorder()),
             items: stations.map((s) {
               final id = s['station_id'].toString();
