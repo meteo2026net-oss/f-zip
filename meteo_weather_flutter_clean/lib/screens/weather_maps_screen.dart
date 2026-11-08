@@ -107,7 +107,7 @@ class _WeatherMapsScreenState extends State<WeatherMapsScreen> {
                   tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 180)),
                   errorTileCallback: (tile, error, stackTrace) {},
                 ),
-                RichAttributionWidget(
+                const RichAttributionWidget(
                   attributions: const [
                     TextSourceAttribution('© OpenStreetMap contributors'),
                     TextSourceAttribution('Weather maps: WeatherAPI.com'),
