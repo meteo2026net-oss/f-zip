@@ -8,6 +8,9 @@ class OpenMeteoService {
   static const String _geocodingBaseUrl = 'https://geocoding-api.open-meteo.com/v1/search';
 
   final http.Client _client;
+  String? _lastForecastError;
+
+  String? get forecastFailureReason => _lastForecastError;
 
   OpenMeteoService({http.Client? client}) : _client = client ?? http.Client();
 
@@ -28,13 +31,25 @@ class OpenMeteoService {
       'forecast_days': '16',
     });
 
-    try {
-      final response = await _client.get(uri).timeout(const Duration(seconds: 10));
-      if (response.statusCode == 200) {
-        return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+    _lastForecastError = null;
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        final response = await _client.get(uri).timeout(
+          const Duration(seconds: 15),
+        );
+        if (response.statusCode == 200) {
+          final decoded = json.decode(utf8.decode(response.bodyBytes));
+          if (decoded is Map<String, dynamic>) return decoded;
+          _lastForecastError = 'Invalid JSON response';
+        } else {
+          _lastForecastError = 'HTTP ${response.statusCode}';
+        }
+      } catch (error) {
+        _lastForecastError = error.runtimeType.toString();
       }
-    } catch (e) {
-      // In case of network timeout or offline
+      if (attempt == 0) {
+        await Future<void>.delayed(const Duration(milliseconds: 700));
+      }
     }
     return null;
   }
