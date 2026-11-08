@@ -44,6 +44,10 @@ try {
         Copy-Item $SavedManifest (Join-Path $Root "web/manifest.json") -Force
     }
 
+    $MainManifestContent = Get-Content $MainManifest -Raw
+    $MainManifestContent = [regex]::Replace($MainManifestContent, 'android:label="[^"]*"', 'android:label="طقس المركز الوطني للأرصاد الجوية السورية"')
+    Set-Content -Path $MainManifest -Value $MainManifestContent -NoNewline
+
     Write-Host "Android and Web platform scaffolding generated."
 }
 finally {
