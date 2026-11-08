@@ -23,6 +23,12 @@ rm -rf "$ROOT/android" "$ROOT/web"
 cp -R "$TMP/scaffold/android" "$ROOT/android"
 cp -R "$TMP/scaffold/web" "$ROOT/web"
 
+# Release builds merge src/main only; INTERNET must be declared there.
+MAIN_MANIFEST="$ROOT/android/app/src/main/AndroidManifest.xml"
+if ! grep -q 'android.permission.INTERNET' "$MAIN_MANIFEST"; then
+  sed -i '2i\    <uses-permission android:name="android.permission.INTERNET"/>' "$MAIN_MANIFEST"
+fi
+
 if [[ -f "$TMP/index.html" ]]; then
   cp "$TMP/index.html" "$ROOT/web/index.html"
 fi
