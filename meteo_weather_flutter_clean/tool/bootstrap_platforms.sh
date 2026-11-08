@@ -36,4 +36,7 @@ if [[ -f "$TMP/manifest.json" ]]; then
   cp "$TMP/manifest.json" "$ROOT/web/manifest.json"
 fi
 
+# Preserve the official app name after regenerating Android scaffolding.
+sed -i 's/android:label="[^"]*"/android:label="طقس المركز الوطني للأرصاد الجوية السورية"/' "$MAIN_MANIFEST"
+
 echo "Android and Web platform scaffolding generated."
