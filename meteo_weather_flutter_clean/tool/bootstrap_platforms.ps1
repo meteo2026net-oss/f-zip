@@ -24,6 +24,19 @@ try {
     Copy-Item (Join-Path $Scaffold "android") (Join-Path $Root "android") -Recurse
     Copy-Item (Join-Path $Scaffold "web") (Join-Path $Root "web") -Recurse
 
+    # Release builds merge src/main only; INTERNET must be declared there.
+    $MainManifest = Join-Path $Root "android/app/src/main/AndroidManifest.xml"
+    $MainManifestContent = Get-Content $MainManifest -Raw
+    if ($MainManifestContent -notmatch 'android.permission.INTERNET') {
+        $MainManifestContent = [regex]::Replace(
+            $MainManifestContent,
+            '(<manifest\\b[^>]*>)',
+            '$1' + [Environment]::NewLine + '    <uses-permission android:name="android.permission.INTERNET"/>',
+            1
+        )
+        Set-Content -Path $MainManifest -Value $MainManifestContent -NoNewline
+    }
+
     if (Test-Path $SavedIndex) {
         Copy-Item $SavedIndex (Join-Path $Root "web/index.html") -Force
     }
