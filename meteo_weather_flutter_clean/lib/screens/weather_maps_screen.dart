@@ -108,7 +108,7 @@ class _WeatherMapsScreenState extends State<WeatherMapsScreen> {
                   errorTileCallback: (tile, error, stackTrace) {},
                 ),
                 const RichAttributionWidget(
-                  attributions: const [
+                  attributions: [
                     TextSourceAttribution('© OpenStreetMap contributors'),
                     TextSourceAttribution('Weather maps: WeatherAPI.com'),
                   ],
