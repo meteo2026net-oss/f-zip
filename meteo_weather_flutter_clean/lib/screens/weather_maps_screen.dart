@@ -105,7 +105,6 @@ class _WeatherMapsScreenState extends State<WeatherMapsScreen> {
                   urlTemplate: _tileUrl,
                   userAgentPackageName: 'com.mcnc.weather.flutter_meteo_weather',
                   tileDisplay: const TileDisplay.fadeIn(duration: Duration(milliseconds: 180)),
-                  opacity: 0.72,
                   errorTileCallback: (tile, error, stackTrace) {},
                 ),
                 RichAttributionWidget(
