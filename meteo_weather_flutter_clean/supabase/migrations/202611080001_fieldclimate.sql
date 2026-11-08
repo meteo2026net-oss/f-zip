@@ -35,7 +35,7 @@ revoke all on public.fieldclimate from public, anon, authenticated;
 revoke all on public.fieldclimate_stations from public, anon, authenticated;
 
 create or replace view public.fieldclimate_public_stations
-with (security_invoker = true) as
+as
 select station_id, station_name, latitude, longitude, altitude_m, last_synced_at
 from public.fieldclimate_stations;
 
