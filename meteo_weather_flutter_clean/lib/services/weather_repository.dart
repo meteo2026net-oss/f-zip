@@ -366,8 +366,8 @@ class WeatherRepository {
     final forecastJson = responses[0];
     final airQualityJson = responses[1];
     if (forecastJson == null) {
-      throw const WeatherDataUnavailableException(
-        "تعذر جلب بيانات الطقس من خدمة التوقعات.",
+      throw WeatherDataUnavailableException(
+        "تعذر جلب بيانات الطقس من خدمة التوقعات. السبب التقني: ${_apiService.forecastFailureReason ?? 'unknown network error'}",
       );
     }
 
