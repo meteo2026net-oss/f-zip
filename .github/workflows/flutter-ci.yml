@@ -3,7 +3,7 @@ name: Flutter CI
 on:
   workflow_dispatch:
   push:
-    branches: [fix/flutter-foundation-and-data-integrity]
+    branches: [fix/flutter-foundation-and-data-integrity, feat/syrian-meteo-branding-maps-security]
     paths:
       - "meteo_weather_flutter_clean/**"
       - ".github/workflows/flutter-ci.yml"
@@ -50,7 +50,7 @@ jobs:
         run: flutter test
 
       - name: Build Android APK
-        run: flutter build apk --release
+        run: flutter build apk --release --obfuscate --split-debug-info=build/symbols
 
       - name: Build Web
         run: flutter build web --release
